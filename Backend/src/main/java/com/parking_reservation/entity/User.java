@@ -27,6 +27,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    // nullable — Google OAuth users do not have a password
+    private String password;
+
     private String profilePic;
 
     private boolean active = true;
