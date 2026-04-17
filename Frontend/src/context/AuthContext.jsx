@@ -19,10 +19,16 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const login = (token) => {
+  // Called after Google OAuth callback (receives raw JWT string)
+  const loginWithToken = (token) => {
     localStorage.setItem('token', token)
-    authApi.getMe()
-      .then((res) => setUser(res.data.data))
+    authApi.getMe().then((res) => setUser(res.data.data))
+  }
+
+  // Called after email/password login (receives { token, user })
+  const login = ({ token, user }) => {
+    localStorage.setItem('token', token)
+    setUser(user)
   }
 
   const logout = () => {
@@ -36,10 +42,11 @@ export function AuthProvider({ children }) {
   const hasRole = (role) => user?.roles?.includes(role)
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout, hasRole }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export const useAuth = () => useContext(AuthContext)
+
