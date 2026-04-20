@@ -7,6 +7,7 @@ import AdminRoute from './routes/AdminRoute'
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import StudentDashboardPage from './pages/student/StudentDashboardPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 
@@ -23,6 +24,9 @@ export default function App() {
             {/* Protected — any authenticated user */}
             <Route path="/dashboard" element={
               <ProtectedRoute><AdminDashboardPage /></ProtectedRoute>
+            } />
+            <Route path="/student/dashboard" element={
+              <ProtectedRoute><StudentDashboardPage /></ProtectedRoute>
             } />
             <Route path="/notifications" element={
               <ProtectedRoute><NotificationsPage /></ProtectedRoute>
