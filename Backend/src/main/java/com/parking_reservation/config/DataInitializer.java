@@ -15,8 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
-    private static final int SLOTS_PER_ZONE = 12;
-    private static final int EXPECTED_TOTAL = 48; // 4 zones × 12 slots
+    private static final int EXPECTED_TOTAL = 144; // 6 zones × 24 slots
 
     private final ParkingSlotRepository slotRepository;
 
@@ -24,40 +23,33 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (slotRepository.count() == EXPECTED_TOTAL) return;
 
-        // Clear old seed data and re-seed with correct layout
         slotRepository.deleteAll();
 
         List<ParkingSlot> slots = new ArrayList<>();
 
-        // Zone A — CAR (12 slots)
-        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
-            slots.add(makeSlot("A" + String.format("%02d", i), "A", "CAR"));
-        }
+        // Car zones — A, B, C (24 slots each)
+        addZone(slots, "A", "CAR",        24);
+        addZone(slots, "B", "CAR",        24);
+        addZone(slots, "C", "CAR",        24);
 
-        // Zone B — CAR (12 slots)
-        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
-            slots.add(makeSlot("B" + String.format("%02d", i), "B", "CAR"));
-        }
+        // Motorcycle zones — D, E (24 slots each)
+        addZone(slots, "D", "MOTORCYCLE", 24);
+        addZone(slots, "E", "MOTORCYCLE", 24);
 
-        // Zone C — MOTORCYCLE (12 slots)
-        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
-            slots.add(makeSlot("C" + String.format("%02d", i), "C", "MOTORCYCLE"));
-        }
-
-        // Zone D — BICYCLE (12 slots)
-        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
-            slots.add(makeSlot("D" + String.format("%02d", i), "D", "BICYCLE"));
-        }
+        // Bicycle zone — F (24 slots)
+        addZone(slots, "F", "BICYCLE",    24);
 
         slotRepository.saveAll(slots);
     }
 
-    private ParkingSlot makeSlot(String number, String zone, String type) {
-        ParkingSlot s = new ParkingSlot();
-        s.setSlotNumber(number);
-        s.setZone(zone);
-        s.setType(type);
-        s.setStatus(SlotStatus.AVAILABLE);
-        return s;
+    private void addZone(List<ParkingSlot> list, String zone, String type, int count) {
+        for (int i = 1; i <= count; i++) {
+            ParkingSlot s = new ParkingSlot();
+            s.setSlotNumber(zone + String.format("%02d", i));
+            s.setZone(zone);
+            s.setType(type);
+            s.setStatus(SlotStatus.AVAILABLE);
+            list.add(s);
+        }
     }
 }
