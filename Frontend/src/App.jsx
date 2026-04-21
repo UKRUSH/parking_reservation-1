@@ -9,6 +9,8 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
+import MyBookingsPage from './pages/parking/MyBookingsPage'
+import AdminBookingsPage from './pages/parking/AdminBookingsPage'
 
 export default function App() {
   return (
@@ -28,9 +30,17 @@ export default function App() {
               <ProtectedRoute><NotificationsPage /></ProtectedRoute>
             } />
 
+            {/* Parking bookings — any authenticated user */}
+            <Route path="/my-bookings" element={
+              <ProtectedRoute><MyBookingsPage /></ProtectedRoute>
+            } />
+
             {/* Admin only */}
             <Route path="/admin/users" element={
               <AdminRoute><UserManagementPage /></AdminRoute>
+            } />
+            <Route path="/admin/bookings" element={
+              <AdminRoute><AdminBookingsPage /></AdminRoute>
             } />
 
             {/* Default redirect */}
