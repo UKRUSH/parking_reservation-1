@@ -29,14 +29,14 @@ public class ParkingBookingService {
 
     @Transactional(readOnly = true)
     public List<ParkingBookingResponse> getBookingsForUser(Long userId) {
-        return bookingRepository.findByUserId(userId).stream()
+        return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(ParkingBookingResponse::from)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ParkingBookingResponse> getAllBookings() {
-        return bookingRepository.findAll().stream()
+        return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(ParkingBookingResponse::from)
                 .collect(Collectors.toList());
     }
@@ -53,7 +53,8 @@ public class ParkingBookingService {
         }
 
         boolean conflict = bookingRepository.existsConflictingBooking(
-                request.getSlotId(), request.getStartTime(), request.getEndTime());
+                request.getSlotId(), BookingStatus.APPROVED,
+                request.getStartTime(), request.getEndTime());
         if (conflict) {
             throw new BookingConflictException("Slot is already booked for the requested time range");
         }
@@ -100,8 +101,9 @@ public class ParkingBookingService {
         return ParkingBookingResponse.from(bookingRepository.save(booking));
     }
 
+    @Transactional(readOnly = true)
     public boolean checkConflict(Long slotId, LocalDateTime startTime, LocalDateTime endTime) {
-        return bookingRepository.existsConflictingBooking(slotId, startTime, endTime);
+        return bookingRepository.existsConflictingBooking(slotId, BookingStatus.APPROVED, startTime, endTime);
     }
 
     private ParkingBooking findBooking(Long id) {

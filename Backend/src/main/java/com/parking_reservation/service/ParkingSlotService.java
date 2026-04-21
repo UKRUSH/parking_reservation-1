@@ -1,6 +1,7 @@
 package com.parking_reservation.service;
 
 import com.parking_reservation.dto.response.ParkingSlotResponse;
+import com.parking_reservation.entity.ParkingBooking.BookingStatus;
 import com.parking_reservation.entity.ParkingSlot;
 import com.parking_reservation.entity.ParkingSlot.SlotStatus;
 import com.parking_reservation.repository.ParkingBookingRepository;
@@ -28,7 +29,8 @@ public class ParkingSlotService {
                 ? slotRepository.findByTypeIgnoreCase(type)
                 : slotRepository.findAll();
 
-        Set<Long> occupiedIds = new HashSet<>(bookingRepository.findOccupiedSlotIds(start, end));
+        Set<Long> occupiedIds = new HashSet<>(
+                bookingRepository.findOccupiedSlotIds(BookingStatus.APPROVED, start, end));
 
         return slots.stream()
                 .map(s -> {
