@@ -34,6 +34,8 @@ public class ParkingBooking {
     @Column(nullable = false)
     private BookingStatus status = BookingStatus.PENDING;
 
+    private String vehicleNumber;
+
     private String purpose;
 
     private String rejectionReason;

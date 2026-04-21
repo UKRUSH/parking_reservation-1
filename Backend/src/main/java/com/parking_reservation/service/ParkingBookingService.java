@@ -69,6 +69,7 @@ public class ParkingBookingService {
         booking.setSlot(slot);
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
+        booking.setVehicleNumber(request.getVehicleNumber());
         booking.setPurpose(request.getPurpose());
 
         return ParkingBookingResponse.from(bookingRepository.save(booking));

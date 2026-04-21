@@ -1,4 +1,4 @@
-const TYPE_LABEL = { CAR: 'Car', MOTORCYCLE: 'Motorcycle', BICYCLE: 'Bicycle' }
+const TYPE_LABEL = { CAR: 'Car', MOTORCYCLE: 'Motorcycle', SUV: 'SUV' }
 
 const SLOT_COLORS = {
   selected:    'bg-blue-600 border-blue-700 text-white cursor-pointer scale-105',

@@ -17,6 +17,7 @@ public class ParkingBookingResponse {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String status;
+    private String vehicleNumber;
     private String purpose;
     private String rejectionReason;
     private LocalDateTime createdAt;
@@ -32,6 +33,7 @@ public class ParkingBookingResponse {
         r.setStartTime(b.getStartTime());
         r.setEndTime(b.getEndTime());
         r.setStatus(b.getStatus().name());
+        r.setVehicleNumber(b.getVehicleNumber());
         r.setPurpose(b.getPurpose());
         r.setRejectionReason(b.getRejectionReason());
         r.setCreatedAt(b.getCreatedAt());

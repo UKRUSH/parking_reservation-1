@@ -19,5 +19,7 @@ public class ParkingBookingRequest {
     @NotNull(message = "End time is required")
     private LocalDateTime endTime;
 
+    private String vehicleNumber;
+
     private String purpose;
 }
