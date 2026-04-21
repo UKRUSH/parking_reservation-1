@@ -52,9 +52,9 @@ public class ParkingBookingService {
             throw new IllegalArgumentException("End time must be after start time");
         }
 
-        boolean conflict = bookingRepository.existsConflictingBooking(
+        boolean conflict = bookingRepository.countConflictingBookings(
                 request.getSlotId(), BookingStatus.APPROVED,
-                request.getStartTime(), request.getEndTime());
+                request.getStartTime(), request.getEndTime()) > 0;
         if (conflict) {
             throw new BookingConflictException("Slot is already booked for the requested time range");
         }
@@ -103,7 +103,7 @@ public class ParkingBookingService {
 
     @Transactional(readOnly = true)
     public boolean checkConflict(Long slotId, LocalDateTime startTime, LocalDateTime endTime) {
-        return bookingRepository.existsConflictingBooking(slotId, BookingStatus.APPROVED, startTime, endTime);
+        return bookingRepository.countConflictingBookings(slotId, BookingStatus.APPROVED, startTime, endTime) > 0;
     }
 
     private ParkingBooking findBooking(Long id) {

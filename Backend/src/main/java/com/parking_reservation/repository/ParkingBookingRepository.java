@@ -17,19 +17,20 @@ public interface ParkingBookingRepository extends JpaRepository<ParkingBooking, 
 
     List<ParkingBooking> findAllByOrderByCreatedAtDesc();
 
-    @Query("SELECT b.slot.id FROM ParkingBooking b " +
-           "WHERE b.status = :status " +
+    @Query("SELECT COUNT(b) FROM ParkingBooking b " +
+           "WHERE b.slot.id = :slotId " +
+           "AND b.status = :status " +
            "AND b.startTime < :endTime AND b.endTime > :startTime")
-    List<Long> findOccupiedSlotIds(
+    long countConflictingBookings(
+            @Param("slotId") Long slotId,
             @Param("status") BookingStatus status,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
 
-    @Query("SELECT COUNT(b) > 0 FROM ParkingBooking b WHERE b.slot.id = :slotId " +
-           "AND b.status = :status " +
+    @Query("SELECT b.slot.id FROM ParkingBooking b " +
+           "WHERE b.status = :status " +
            "AND b.startTime < :endTime AND b.endTime > :startTime")
-    boolean existsConflictingBooking(
-            @Param("slotId") Long slotId,
+    List<Long> findOccupiedSlotIds(
             @Param("status") BookingStatus status,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
