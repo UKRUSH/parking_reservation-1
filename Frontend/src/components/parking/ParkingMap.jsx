@@ -20,10 +20,10 @@ function ParkingSlot({ slot, selected, onSelect }) {
       onClick={() => isBookable && onSelect(slot)}
       disabled={!isBookable}
       title={isBookable ? `Select ${slot.slotNumber}` : `${slot.slotNumber} — Occupied`}
-      className={`w-14 h-20 rounded border-2 text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all ${colorClass}`}
+      className={`w-14 h-16 rounded border-2 text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-all ${colorClass}`}
     >
-      <span className="text-base leading-none">{slot.slotNumber}</span>
-      {selected && <span className="text-[9px] uppercase tracking-wide opacity-80">Selected</span>}
+      <span className="text-sm leading-none">{slot.slotNumber}</span>
+      {selected && <span className="text-[8px] uppercase tracking-wide opacity-80">Selected</span>}
     </button>
   )
 }
@@ -31,8 +31,14 @@ function ParkingSlot({ slot, selected, onSelect }) {
 function Zone({ name, slots, selectedId, onSelect }) {
   return (
     <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Zone {name}</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+        Zone {name}
+        <span className="ml-2 text-gray-400 font-normal normal-case">
+          ({slots.filter(s => s.available).length} available)
+        </span>
+      </p>
+      {/* 4 columns × 3 rows grid for 12 slots */}
+      <div className="grid grid-cols-4 gap-2">
         {slots.map((slot) => (
           <ParkingSlot
             key={slot.id}
@@ -54,15 +60,15 @@ export default function ParkingMap({ slots, selectedId, onSelect }) {
     return acc
   }, {})
 
-  const available = slots.filter((s) => s.available).length
+  const totalAvailable = slots.filter((s) => s.available).length
 
   return (
     <div className="space-y-4">
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs">
+      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded bg-green-100 border border-green-400 inline-block" />
-          Available ({available})
+          Available ({totalAvailable})
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded bg-red-100 border border-red-300 inline-block" />
@@ -78,14 +84,14 @@ export default function ParkingMap({ slots, selectedId, onSelect }) {
         </span>
       </div>
 
-      {/* Entrance indicator */}
+      {/* Entrance */}
       <div className="text-center">
-        <span className="inline-block bg-yellow-400 text-yellow-900 text-xs font-bold px-4 py-1 rounded-full">
+        <span className="inline-block bg-yellow-400 text-yellow-900 text-xs font-bold px-6 py-1 rounded-full tracking-wider">
           ENTRANCE
         </span>
       </div>
 
-      {/* Zones grid */}
+      {/* 2×2 zone grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {Object.entries(zones).map(([zoneName, zoneSlots]) => (
           <Zone

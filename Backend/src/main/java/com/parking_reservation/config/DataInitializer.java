@@ -15,31 +15,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
+    private static final int SLOTS_PER_ZONE = 12;
+    private static final int EXPECTED_TOTAL = 48; // 4 zones × 12 slots
+
     private final ParkingSlotRepository slotRepository;
 
     @Override
     public void run(ApplicationArguments args) {
-        if (slotRepository.count() > 0) return;
+        if (slotRepository.count() == EXPECTED_TOTAL) return;
+
+        // Clear old seed data and re-seed with correct layout
+        slotRepository.deleteAll();
 
         List<ParkingSlot> slots = new ArrayList<>();
 
-        // Zone A — CAR (6 slots)
-        for (int i = 1; i <= 6; i++) {
+        // Zone A — CAR (12 slots)
+        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
             slots.add(makeSlot("A" + String.format("%02d", i), "A", "CAR"));
         }
 
-        // Zone B — CAR (6 slots)
-        for (int i = 1; i <= 6; i++) {
+        // Zone B — CAR (12 slots)
+        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
             slots.add(makeSlot("B" + String.format("%02d", i), "B", "CAR"));
         }
 
-        // Zone C — MOTORCYCLE (6 slots)
-        for (int i = 1; i <= 6; i++) {
+        // Zone C — MOTORCYCLE (12 slots)
+        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
             slots.add(makeSlot("C" + String.format("%02d", i), "C", "MOTORCYCLE"));
         }
 
-        // Zone D — BICYCLE (4 slots)
-        for (int i = 1; i <= 4; i++) {
+        // Zone D — BICYCLE (12 slots)
+        for (int i = 1; i <= SLOTS_PER_ZONE; i++) {
             slots.add(makeSlot("D" + String.format("%02d", i), "D", "BICYCLE"));
         }
 
