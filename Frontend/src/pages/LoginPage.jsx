@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   if (loading) return null
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) return <Navigate to={user.roles?.includes('ADMIN') ? '/dashboard' : '/student-dashboard'} replace />
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -31,8 +31,10 @@ export default function LoginPage() {
       } else {
         res = await authApi.register({ name: form.name, email: form.email, password: form.password })
       }
+      const { user: loggedInUser } = res.data.data
       login(res.data.data)          // { token, user }
-      navigate('/dashboard', { replace: true })
+      const dest = loggedInUser?.roles?.includes('ADMIN') ? '/dashboard' : '/student-dashboard'
+      navigate(dest, { replace: true })
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong')
     } finally {
