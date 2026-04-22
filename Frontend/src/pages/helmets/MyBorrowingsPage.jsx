@@ -25,11 +25,6 @@ export default function MyBorrowingsPage() {
 
   const [borrowings, setBorrowings] = useState([])
   const [loading, setLoading]       = useState(true)
-  const [showForm, setShowForm]      = useState(false)
-  const [purpose, setPurpose]        = useState('')
-  const [submitting, setSubmitting]  = useState(false)
-  const [error, setError]            = useState(null)
-  const [success, setSuccess]        = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -40,26 +35,6 @@ export default function MyBorrowingsPage() {
   }
 
   useEffect(() => { load() }, [])
-
-  const handleRequest = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-    setSuccess(null)
-    try {
-      await helmetBorrowingApi.create({ purpose: purpose.trim() || undefined })
-      setSuccess('Helmet borrowing request submitted! Awaiting admin approval.')
-      setPurpose('')
-      setShowForm(false)
-      load()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit request. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const hasActive = borrowings.some(b => b.status === 'PENDING' || b.status === 'ISSUED')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,76 +54,27 @@ export default function MyBorrowingsPage() {
       <div className="max-w-3xl mx-auto px-6 py-8">
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">My Helmet Borrowings</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Request and track your campus helmet loans</p>
-          </div>
-          {!hasActive && (
-            <button
-              onClick={() => { setShowForm(s => !s); setError(null) }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-            >
-              {showForm ? 'Cancel' : '+ Request Helmet'}
-            </button>
-          )}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">My Helmet Borrowings</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Track your campus helmet loans</p>
         </div>
 
-        {/* Active-request banner */}
-        {hasActive && (
-          <div className="mb-5 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-            You have an active helmet request. You can submit a new one once it is resolved.
+        {/* Info banner */}
+        <div className="mb-6 flex items-start gap-3 px-4 py-3.5 bg-orange-50 border border-orange-200 rounded-xl">
+          <span className="text-xl mt-0.5">🪖</span>
+          <div className="text-sm text-orange-800">
+            <p className="font-semibold">Helmet requests are made through Motorcycle bookings</p>
+            <p className="mt-0.5 text-orange-600">
+              When reserving a Motorcycle parking slot, you can optionally request a campus helmet at the same time.{' '}
+              <button
+                onClick={() => navigate('/my-bookings')}
+                className="underline font-medium hover:text-orange-800"
+              >
+                Go to My Bookings →
+              </button>
+            </p>
           </div>
-        )}
-
-        {/* Success */}
-        {success && (
-          <div className="mb-5 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-            {success}
-          </div>
-        )}
-
-        {/* Request form */}
-        {showForm && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="font-semibold text-gray-800 mb-4">New Helmet Borrow Request</h3>
-            <form onSubmit={handleRequest} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Purpose <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Motorcycle ride to lecture block"
-                  value={purpose}
-                  onChange={e => setPurpose(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => { setShowForm(false); setError(null) }}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {submitting ? 'Submitting…' : 'Submit Request'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+        </div>
 
         {/* Borrowings list */}
         {loading ? (
@@ -157,10 +83,10 @@ export default function MyBorrowingsPage() {
           <div className="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500 text-sm">
             No helmet borrowings yet.{' '}
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => navigate('/my-bookings')}
               className="text-blue-500 hover:underline"
             >
-              Request one now.
+              Book a motorcycle slot to request one.
             </button>
           </div>
         ) : (

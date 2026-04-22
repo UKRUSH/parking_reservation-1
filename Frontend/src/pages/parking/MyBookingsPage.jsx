@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parkingBookingApi } from '../../api/parkingBookingApi'
 import { parkingSlotApi } from '../../api/parkingSlotApi'
+import { helmetBorrowingApi } from '../../api/helmetBorrowingApi'
 import ParkingMap from '../../components/parking/ParkingMap'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
@@ -104,6 +105,23 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
   const [loadingSlot, setLoadingSlot]   = useState(true)
   const [slotError, setSlotError]       = useState(null)
 
+  // Helmet borrowing state (only relevant for MOTORCYCLE)
+  const [helmetWanted, setHelmetWanted]           = useState(false)
+  const [helmetPurpose, setHelmetPurpose]         = useState('')
+  const [hasActiveHelmet, setHasActiveHelmet]     = useState(false)
+  const [helmetCheckLoading, setHelmetCheckLoading] = useState(vehicleType === 'MOTORCYCLE')
+
+  useEffect(() => {
+    if (vehicleType !== 'MOTORCYCLE') return
+    helmetBorrowingApi.getAll()
+      .then(res => {
+        const active = (res.data.data || []).some(b => b.status === 'PENDING' || b.status === 'ISSUED')
+        setHasActiveHelmet(active)
+      })
+      .catch(() => {})
+      .finally(() => setHelmetCheckLoading(false))
+  }, [vehicleType])
+
   const fetchSlotBookings = () => {
     setLoadingSlot(true)
     setSlotError(null)
@@ -143,6 +161,13 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
         vehicleNumber: form.vehicleNumber,
         purpose: form.purpose.trim() || `${vehicleLabel} parking`,
       })
+      if (vehicleType === 'MOTORCYCLE' && helmetWanted && !hasActiveHelmet) {
+        try {
+          await helmetBorrowingApi.create({ purpose: helmetPurpose.trim() || undefined })
+        } catch {
+          // helmet request failed silently — parking booking already confirmed
+        }
+      }
       onBooked()
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed. Please try again.')
@@ -312,6 +337,51 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Helmet borrowing section — Motorcycle only */}
+            {vehicleType === 'MOTORCYCLE' && (
+              <div className="border border-orange-200 bg-orange-50 rounded-xl px-4 py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🪖</span>
+                  <p className="text-sm font-semibold text-orange-800">Helmet Borrowing</p>
+                </div>
+
+                {helmetCheckLoading ? (
+                  <p className="text-xs text-orange-600">Checking helmet availability…</p>
+                ) : hasActiveHelmet ? (
+                  <p className="text-xs text-orange-700 bg-orange-100 border border-orange-200 rounded-lg px-3 py-2">
+                    You already have an active helmet request. It will be handled separately.
+                  </p>
+                ) : (
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={helmetWanted}
+                        onChange={e => setHelmetWanted(e.target.checked)}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span className="text-sm text-orange-800">Also request a campus helmet</span>
+                    </label>
+
+                    {helmetWanted && (
+                      <div className="mt-3">
+                        <input
+                          type="text"
+                          placeholder="Helmet purpose (optional)"
+                          value={helmetPurpose}
+                          onChange={e => setHelmetPurpose(e.target.value)}
+                          className="w-full border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                        />
+                        <p className="text-xs text-orange-500 mt-1">
+                          Helmet request will be submitted automatically with your booking.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Error */}
             {error && (
