@@ -61,6 +61,11 @@ export default function AdminDashboardPage() {
             <p className="font-semibold text-gray-800">Notifications</p>
             <p className="text-sm text-gray-500 mt-1">View system notifications</p>
           </button>
+          <button onClick={() => navigate('/admin/helmet-borrowings')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 border-orange-500">
+            <p className="font-semibold text-gray-800">Helmet Borrowings</p>
+            <p className="text-sm text-gray-500 mt-1">Issue, reject and track helmet loans</p>
+          </button>
         </div>
       </div>
     </div>

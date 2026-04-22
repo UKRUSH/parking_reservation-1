@@ -78,6 +78,12 @@ const Icon = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   ),
+  Helmet: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
   EmptyBox: () => (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="22" height="22">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -151,10 +157,11 @@ function Sidebar({ open, onClose, user, logout, pending }) {
   const location = useLocation()
 
   const navItems = [
-    { path: '/student/dashboard', label: 'Dashboard',    Ico: Icon.Dashboard },
-    { path: '/my-bookings',       label: 'My Bookings',  Ico: Icon.Bookings, badge: pending || null },
-    { path: '/parking',           label: 'Find Parking', Ico: Icon.Parking },
-    { path: '/notifications',     label: 'Notifications',Ico: Icon.Bell },
+    { path: '/student/dashboard', label: 'Dashboard',        Ico: Icon.Dashboard },
+    { path: '/my-bookings',       label: 'My Bookings',      Ico: Icon.Bookings, badge: pending || null },
+    { path: '/parking',           label: 'Find Parking',     Ico: Icon.Parking },
+    { path: '/my-borrowings',     label: 'Helmet Borrowings',Ico: Icon.Helmet },
+    { path: '/notifications',     label: 'Notifications',    Ico: Icon.Bell },
   ]
 
   const go = (path) => { navigate(path); onClose() }
