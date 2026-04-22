@@ -26,7 +26,7 @@ public class HelmetBorrowing {
 
     private String purpose;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "integer default 1")
     private int quantity = 1;
 
     private String rejectionReason;

@@ -28,7 +28,7 @@ public class HelmetBorrowingResponse {
         r.setUserEmail(h.getUser().getEmail());
         r.setStatus(h.getStatus().name());
         r.setPurpose(h.getPurpose());
-        r.setQuantity(h.getQuantity());
+        r.setQuantity(h.getQuantity() > 0 ? h.getQuantity() : 1);
         r.setRejectionReason(h.getRejectionReason());
         r.setIssuedAt(h.getIssuedAt());
         r.setReturnedAt(h.getReturnedAt());
