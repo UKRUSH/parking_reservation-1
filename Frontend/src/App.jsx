@@ -14,6 +14,7 @@ import StudentDashboardPage from './pages/student/StudentDashboardPage'
 import MyBookingsPage from './pages/parking/MyBookingsPage'
 import ParkingSlotsPage from './pages/parking/ParkingSlotsPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
+import MyBorrowingsPage from './pages/helmets/MyBorrowingsPage'
 
 // Redirects to the right dashboard based on role
 function RoleRedirect() {
@@ -51,6 +52,9 @@ export default function App() {
             } />
             <Route path="/notifications" element={
               <ProtectedRoute><NotificationsPage /></ProtectedRoute>
+            } />
+            <Route path="/my-borrowings" element={
+              <StudentRoute><MyBorrowingsPage /></StudentRoute>
             } />
 
             {/* Admin routes */}
