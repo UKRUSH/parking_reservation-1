@@ -1,6 +1,7 @@
 package com.parking_reservation.controller;
 
 import com.parking_reservation.dto.request.ParkingSlotRequest;
+import com.parking_reservation.dto.request.ZoneRequest;
 import com.parking_reservation.dto.response.ApiResponse;
 import com.parking_reservation.dto.response.ParkingSlotResponse;
 import com.parking_reservation.service.ParkingSlotService;
@@ -83,6 +84,26 @@ public class ParkingSlotController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long id) {
         slotService.deleteSlot(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // POST /api/v1/parking-slots/zones  (Admin only) — bulk-create all slots for a new zone
+    @PostMapping("/zones")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ParkingSlotResponse>>> createZone(
+            @Valid @RequestBody ZoneRequest request) {
+        List<ParkingSlotResponse> created = slotService.createZone(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Zone created with " + created.size() + " slots", created));
+    }
+
+    // DELETE /api/v1/parking-slots/zones?zone=A&type=CAR  (Admin only) — remove entire zone
+    @DeleteMapping("/zones")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteZone(
+            @RequestParam String zone,
+            @RequestParam String type) {
+        slotService.deleteZone(zone, type);
         return ResponseEntity.noContent().build();
     }
 }

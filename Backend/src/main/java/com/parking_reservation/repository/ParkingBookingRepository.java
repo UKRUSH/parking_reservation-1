@@ -15,6 +15,8 @@ public interface ParkingBookingRepository extends JpaRepository<ParkingBooking, 
 
     List<ParkingBooking> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    void deleteBySlotIdIn(List<Long> slotIds);
+
     List<ParkingBooking> findAllByOrderByCreatedAtDesc();
 
     @Query("SELECT COUNT(b) FROM ParkingBooking b " +

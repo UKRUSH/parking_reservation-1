@@ -1,6 +1,7 @@
 package com.parking_reservation.service;
 
 import com.parking_reservation.dto.request.ParkingSlotRequest;
+import com.parking_reservation.dto.request.ZoneRequest;
 import com.parking_reservation.dto.response.ParkingSlotResponse;
 import com.parking_reservation.entity.ParkingBooking.BookingStatus;
 import com.parking_reservation.entity.ParkingSlot;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -104,5 +106,46 @@ public class ParkingSlotService {
             throw new ResourceNotFoundException("Parking slot not found: " + id);
         }
         slotRepository.deleteById(id);
+    }
+
+    @Transactional
+    public List<ParkingSlotResponse> createZone(ZoneRequest request) {
+        String zone   = request.getZone().trim().toUpperCase();
+        String type   = request.getType().trim().toUpperCase();
+        String prefix = request.getSlotPrefix().trim().toUpperCase();
+
+        if (slotRepository.existsByZoneIgnoreCaseAndTypeIgnoreCase(zone, type)) {
+            throw new IllegalArgumentException(
+                    "Zone " + zone + " (" + type + ") already exists. Choose a different zone letter or type.");
+        }
+
+        List<ParkingSlot> slots = new ArrayList<>();
+        for (int i = 1; i <= request.getCount(); i++) {
+            String slotNum = prefix + String.format("%02d", i);
+            if (slotRepository.existsBySlotNumber(slotNum)) {
+                throw new IllegalArgumentException("Slot number " + slotNum + " already exists.");
+            }
+            ParkingSlot slot = new ParkingSlot();
+            slot.setSlotNumber(slotNum);
+            slot.setZone(zone);
+            slot.setType(type);
+            slot.setStatus(SlotStatus.AVAILABLE);
+            slots.add(slot);
+        }
+
+        return slotRepository.saveAll(slots).stream()
+                .map(s -> ParkingSlotResponse.from(s, true))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteZone(String zone, String type) {
+        List<ParkingSlot> slots = slotRepository.findByZoneIgnoreCaseAndTypeIgnoreCase(zone, type);
+        if (slots.isEmpty()) {
+            throw new ResourceNotFoundException("Zone " + zone + " (" + type + ") not found.");
+        }
+        List<Long> slotIds = slots.stream().map(ParkingSlot::getId).collect(Collectors.toList());
+        bookingRepository.deleteBySlotIdIn(slotIds);
+        slotRepository.deleteAll(slots);
     }
 }
