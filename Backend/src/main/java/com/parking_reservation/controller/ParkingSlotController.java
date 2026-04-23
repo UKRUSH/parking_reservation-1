@@ -1,15 +1,20 @@
 package com.parking_reservation.controller;
 
+import com.parking_reservation.dto.request.ParkingSlotRequest;
 import com.parking_reservation.dto.response.ApiResponse;
 import com.parking_reservation.dto.response.ParkingSlotResponse;
 import com.parking_reservation.service.ParkingSlotService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/parking-slots")
@@ -32,5 +37,52 @@ public class ParkingSlotController {
                 : LocalDateTime.now().plusDays(1).withHour(23).withMinute(59).withSecond(0).withNano(0);
 
         return ResponseEntity.ok(ApiResponse.success(slotService.getSlots(type, start, end)));
+    }
+
+    // GET /api/v1/parking-slots/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ParkingSlotResponse>> getSlotById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(slotService.getSlotById(id)));
+    }
+
+    // POST /api/v1/parking-slots  (Admin only)
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ParkingSlotResponse>> createSlot(
+            @Valid @RequestBody ParkingSlotRequest request) {
+        ParkingSlotResponse created = slotService.createSlot(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Parking slot created", created));
+    }
+
+    // PUT /api/v1/parking-slots/{id}  (Admin only)
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ParkingSlotResponse>> updateSlot(
+            @PathVariable Long id,
+            @Valid @RequestBody ParkingSlotRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Parking slot updated", slotService.updateSlot(id, request)));
+    }
+
+    // PATCH /api/v1/parking-slots/{id}/status  (Admin only)
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ParkingSlotResponse>> updateSlotStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        if (status == null || status.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Field 'status' is required"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Status updated", slotService.updateSlotStatus(id, status)));
+    }
+
+    // DELETE /api/v1/parking-slots/{id}  (Admin only)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteSlot(@PathVariable Long id) {
+        slotService.deleteSlot(id);
+        return ResponseEntity.noContent().build();
     }
 }
