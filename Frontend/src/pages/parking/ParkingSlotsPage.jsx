@@ -374,7 +374,7 @@ export default function ParkingSlotsPage() {
                   <div className="ps-entrance">
                     <span className="ps-entrance-label">Entrance / Exit</span>
                   </div>
-                  {Object.entries(visibleByZone).map(([zoneName, zoneSlots]) => {
+                  {Object.entries(visibleByZone).sort(([a], [b]) => a.localeCompare(b)).map(([zoneName, zoneSlots]) => {
                     const freeCount = zoneSlots.filter(s => s.available).length
                     return (
                       <div key={zoneName} className="ps-zone-section">
