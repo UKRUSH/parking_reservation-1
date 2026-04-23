@@ -1,16 +1,26 @@
 import { useEffect, useState } from 'react'
 import { userApi } from '../../api/userApi'
 
-const ROLES = ['USER', 'ADMIN', 'TECHNICIAN']
+const ROLES = [
+  { value: 'USER',  label: 'Student' },
+  { value: 'ADMIN', label: 'Admin' },
+]
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [updating, setUpdating] = useState(null)
 
   useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      setError('No session token — please log in with your email and password to view users.')
+      setLoading(false)
+      return
+    }
     userApi.getAll()
       .then((res) => setUsers(res.data.data || []))
+      .catch(() => setError('Failed to load users. Make sure the backend is running and your account has ADMIN access.'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -31,6 +41,7 @@ export default function UserManagementPage() {
   }
 
   if (loading) return <div className="p-6 text-gray-500">Loading users...</div>
+  if (error) return <div className="p-6 text-red-500 bg-red-50 rounded-lg m-6">{error}</div>
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -48,6 +59,9 @@ export default function UserManagementPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
+            {users.length === 0 && (
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No users found</td></tr>
+            )}
             {users.map((user) => (
               <tr key={user.id} className={!user.active ? 'opacity-50' : ''}>
                 <td className="px-4 py-3 font-medium text-gray-800">{user.name}</td>
@@ -59,7 +73,7 @@ export default function UserManagementPage() {
                     onChange={(e) => changeRole(user.id, e.target.value)}
                     className="border border-gray-200 rounded px-2 py-1 text-xs"
                   >
-                    {ROLES.map((r) => <option key={r}>{r}</option>)}
+                    {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                 </td>
                 <td className="px-4 py-3">

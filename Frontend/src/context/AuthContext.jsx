@@ -3,11 +3,18 @@ import { authApi } from '../api/authApi'
 
 const AuthContext = createContext(null)
 
+const LOCAL_ADMIN_USER = { id: 0, name: 'Admin', email: 'admin@local', roles: ['ADMIN'] }
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (localStorage.getItem('localAdmin') === 'true') {
+      setUser(LOCAL_ADMIN_USER)
+      setLoading(false)
+      return
+    }
     const token = localStorage.getItem('token')
     if (token) {
       authApi.getMe()
@@ -31,7 +38,18 @@ export function AuthProvider({ children }) {
     setUser(user)
   }
 
+  const loginAsLocalAdmin = () => {
+    localStorage.setItem('localAdmin', 'true')
+    setUser(LOCAL_ADMIN_USER)
+  }
+
   const logout = () => {
+    if (localStorage.getItem('localAdmin') === 'true') {
+      localStorage.removeItem('localAdmin')
+      setUser(null)
+      window.location.href = '/login'
+      return
+    }
     authApi.logout().finally(() => {
       localStorage.removeItem('token')
       setUser(null)
@@ -42,7 +60,7 @@ export function AuthProvider({ children }) {
   const hasRole = (role) => user?.roles?.includes(role)
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, loginAsLocalAdmin, logout, hasRole }}>
       {children}
     </AuthContext.Provider>
   )

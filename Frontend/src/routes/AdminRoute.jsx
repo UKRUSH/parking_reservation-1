@@ -9,7 +9,7 @@ export default function AdminRoute({ children }) {
   }
 
   if (!user) return <Navigate to="/login" replace />
-  if (!hasRole('ADMIN')) return <Navigate to="/dashboard" replace />
+  if (!hasRole('ADMIN')) return <Navigate to="/student/dashboard" replace />
 
   return children
 }
