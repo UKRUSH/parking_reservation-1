@@ -18,6 +18,8 @@ export const ticketApi = {
     axiosInstance.delete(`/tickets/${id}`),
 
   // Attachments
+  listAttachments: (ticketId) =>
+    axiosInstance.get(`/tickets/${ticketId}/attachments`),
   uploadAttachment: (ticketId, file) => {
     const form = new FormData()
     form.append('file', file)
@@ -25,8 +27,8 @@ export const ticketApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
-  getAttachmentUrl: (ticketId, fileId) =>
-    `/api/v1/tickets/${ticketId}/attachments/${fileId}`,
+  downloadAttachment: (ticketId, fileId) =>
+    axiosInstance.get(`/tickets/${ticketId}/attachments/${fileId}`, { responseType: 'blob' }),
   deleteAttachment: (ticketId, fileId) =>
     axiosInstance.delete(`/tickets/${ticketId}/attachments/${fileId}`),
 
