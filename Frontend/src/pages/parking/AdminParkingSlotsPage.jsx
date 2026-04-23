@@ -285,71 +285,72 @@ export default function AdminParkingSlotsPage() {
           </span>
         </div>
 
-        <div className="aps-table-wrap">
-          {loading ? (
-            <div className="aps-empty"><div className="aps-empty-title">Loading zones…</div></div>
-          ) : displayedZones.length === 0 ? (
-            <div className="aps-empty">
-              <div className="aps-empty-title">No zones found</div>
-              <p style={{ fontSize: '0.8125rem', color: '#94a3b8', marginTop: '0.375rem' }}>
-                Click "+ Add Zone" to create the first zone.
-              </p>
-            </div>
-          ) : (
-            <table className="aps-table">
-              <thead>
-                <tr>
-                  <th>Zone</th>
-                  <th>Type</th>
-                  <th>Total Slots</th>
-                  <th>Available</th>
-                  <th>Occupied</th>
-                  <th>Maintenance</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedZones.map(z => {
-                  const avail = z.slots.filter(s => s.status === 'AVAILABLE').length
-                  const occ   = z.slots.filter(s => s.status === 'OCCUPIED').length
-                  const maint = z.slots.filter(s => s.status === 'MAINTENANCE').length
-                  return (
-                    <tr key={`${z.zone}__${z.type}`}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                          <div style={{
-                            width: 34, height: 34, borderRadius: 8,
-                            background: '#dbeafe', color: '#1d4ed8',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontWeight: 800, fontSize: '0.9375rem', flexShrink: 0,
-                          }}>{z.zone}</div>
-                          <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9375rem' }}>Zone {z.zone}</span>
-                        </div>
-                      </td>
-                      <td><span className={typeBadgeClass(z.type)}>{TYPE_LABEL[z.type]}</span></td>
-                      <td><span style={{ fontWeight: 700, color: '#1e293b' }}>{z.slots.length}</span></td>
-                      <td><span style={{ fontWeight: 600, color: '#166534' }}>{avail}</span></td>
-                      <td><span style={{ fontWeight: 600, color: '#991b1b' }}>{occ}</span></td>
-                      <td><span style={{ fontWeight: 600, color: '#64748b' }}>{maint}</span></td>
-                      <td>
-                        <div className="aps-action-row">
-                          <button className="aps-btn aps-btn--edit"
-                            onClick={() => openViewSlots(z.zone, z.type)}>
-                            View Slots
-                          </button>
-                          <button className="aps-btn aps-btn--delete"
-                            onClick={() => handleDeleteZone(z.zone, z.type)}>
-                            Delete Zone
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+        {loading ? (
+          <div className="aps-empty"><div className="aps-empty-title">Loading zones…</div></div>
+        ) : displayedZones.length === 0 ? (
+          <div className="aps-empty">
+            <div className="aps-empty-title">No zones found</div>
+            <p style={{ fontSize: '0.8125rem', color: '#94a3b8', marginTop: '0.375rem' }}>
+              Click "+ Add Zone" to create the first zone.
+            </p>
+          </div>
+        ) : (
+          <div className="aps-zone-grid">
+            {displayedZones.map(z => {
+              const avail = z.slots.filter(s => s.status === 'AVAILABLE').length
+              const occ   = z.slots.filter(s => s.status === 'OCCUPIED').length
+              const maint = z.slots.filter(s => s.status === 'MAINTENANCE').length
+              return (
+                <div key={`${z.zone}__${z.type}`} className="aps-zone-card">
+                  {/* Card header */}
+                  <div className="aps-zone-card-header">
+                    <div className="aps-zone-letter">{z.zone}</div>
+                    <div>
+                      <div className="aps-zone-card-title">Zone {z.zone}</div>
+                      <div className="aps-zone-card-sub">
+                        <span className={typeBadgeClass(z.type)} style={{ fontSize: '0.625rem', padding: '0.1rem 0.45rem' }}>
+                          {TYPE_LABEL[z.type]}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div className="aps-zone-card-stats">
+                    <div className="aps-zone-stat">
+                      <div className="aps-zone-stat-val">{z.slots.length}</div>
+                      <div className="aps-zone-stat-label">Total</div>
+                    </div>
+                    <div className="aps-zone-stat">
+                      <div className="aps-zone-stat-val aps-zone-stat-val--green">{avail}</div>
+                      <div className="aps-zone-stat-label">Available</div>
+                    </div>
+                    <div className="aps-zone-stat">
+                      <div className="aps-zone-stat-val aps-zone-stat-val--red">{occ}</div>
+                      <div className="aps-zone-stat-label">Occupied</div>
+                    </div>
+                    <div className="aps-zone-stat">
+                      <div className="aps-zone-stat-val aps-zone-stat-val--gray">{maint}</div>
+                      <div className="aps-zone-stat-label">Maintenance</div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="aps-zone-card-actions">
+                    <button className="aps-btn aps-btn--edit"
+                      onClick={() => openViewSlots(z.zone, z.type)}>
+                      View Slots
+                    </button>
+                    <button className="aps-btn aps-btn--delete"
+                      onClick={() => handleDeleteZone(z.zone, z.type)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ═══════════ MODAL: ADD ZONE ═══════════ */}
