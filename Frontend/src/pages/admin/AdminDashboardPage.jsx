@@ -46,10 +46,15 @@ export default function AdminDashboardPage() {
             <p className="font-semibold text-gray-800">Parking Requests</p>
             <p className="text-sm text-gray-500 mt-1">Approve or reject student booking requests</p>
           </button>
-          <button onClick={() => navigate('/parking')}
+          <button onClick={() => navigate('/admin/parking-management')}
             className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 border-blue-500">
-            <p className="font-semibold text-gray-800">Parking Slots</p>
-            <p className="text-sm text-gray-500 mt-1">View all slot availability</p>
+            <p className="font-semibold text-gray-800">Parking Slot Management</p>
+            <p className="text-sm text-gray-500 mt-1">Add, edit, update status and remove parking slots</p>
+          </button>
+          <button onClick={() => navigate('/parking')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 border-sky-400">
+            <p className="font-semibold text-gray-800">Parking Map View</p>
+            <p className="text-sm text-gray-500 mt-1">View live slot availability across all zones</p>
           </button>
           <button onClick={() => navigate('/admin/users')}
             className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 border-purple-500">

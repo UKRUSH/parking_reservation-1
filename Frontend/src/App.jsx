@@ -22,6 +22,7 @@ import TicketDetailPage from './pages/tickets/TicketDetailPage'
 import ParkingCataloguePage from './pages/parking/ParkingCataloguePage'
 import HelmetCataloguePage from './pages/helmets/HelmetCataloguePage'
 import ResourceManagementPage from './pages/admin/ResourceManagementPage'
+import AdminParkingSlotsPage from './pages/parking/AdminParkingSlotsPage'
 
 // Redirects to the right dashboard based on role
 function RoleRedirect() {
@@ -82,6 +83,9 @@ export default function App() {
             } />
             <Route path="/admin/parking-slots" element={
               <AdminRoute><ParkingCataloguePage /></AdminRoute>
+            } />
+            <Route path="/admin/parking-management" element={
+              <AdminRoute><AdminParkingSlotsPage /></AdminRoute>
             } />
             <Route path="/admin/helmets" element={
               <AdminRoute><HelmetCataloguePage /></AdminRoute>
