@@ -13,4 +13,8 @@ export const parkingSlotApi = {
   updateStatus: (id, status)  => axiosInstance.patch(`/parking-slots/${id}/status`, { status }),
 
   delete:       (id)          => axiosInstance.delete(`/parking-slots/${id}`),
+
+  createZone:   (data)        => axiosInstance.post('/parking-slots/zones', data),
+
+  deleteZone:   (zone, type)  => axiosInstance.delete('/parking-slots/zones', { params: { zone, type } }),
 }
