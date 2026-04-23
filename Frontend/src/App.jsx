@@ -19,6 +19,9 @@ import AdminBorrowingsPage from './pages/helmets/AdminBorrowingsPage'
 import TicketListPage from './pages/tickets/TicketListPage'
 import CreateTicketPage from './pages/tickets/CreateTicketPage'
 import TicketDetailPage from './pages/tickets/TicketDetailPage'
+import ParkingCataloguePage from './pages/parking/ParkingCataloguePage'
+import HelmetCataloguePage from './pages/helmets/HelmetCataloguePage'
+import ResourceManagementPage from './pages/admin/ResourceManagementPage'
 
 // Redirects to the right dashboard based on role
 function RoleRedirect() {
@@ -73,6 +76,15 @@ export default function App() {
             } />
             <Route path="/admin/helmet-borrowings" element={
               <AdminRoute><AdminBorrowingsPage /></AdminRoute>
+            } />
+            <Route path="/admin/resources" element={
+              <AdminRoute><ResourceManagementPage /></AdminRoute>
+            } />
+            <Route path="/admin/parking-slots" element={
+              <AdminRoute><ParkingCataloguePage /></AdminRoute>
+            } />
+            <Route path="/admin/helmets" element={
+              <AdminRoute><HelmetCataloguePage /></AdminRoute>
             } />
 
             {/* Ticket routes — all authenticated users */}
