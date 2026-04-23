@@ -455,11 +455,17 @@ function VehicleSelector({ onSelect }) {
 
 /* ── Slot Picker ─────────────────────────────────────────────────────────── */
 function SlotPicker({ vehicleType, onBack, onBooked }) {
-  const [slots, setSlots]     = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const [slots, setSlots]       = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
   const [selected, setSelected] = useState(null)
-  const label = VEHICLE_TYPES.find(v => v.id === vehicleType)?.label
+
+  const vt    = VEHICLE_TYPES.find(v => v.id === vehicleType)
+  const label = vt?.label ?? vehicleType
+  const emoji = vt?.emoji ?? '🚗'
+  const color = vt?.color ?? '#3b82f6'
+
+  const available = slots.filter(s => s.available).length
 
   useEffect(() => {
     setLoading(true); setError(null)
@@ -471,17 +477,36 @@ function SlotPicker({ vehicleType, onBack, onBooked }) {
 
   return (
     <div className="bk-flow-body">
+      {/* Header row */}
       <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.25rem' }}>
         <button className="bk-back-btn" onClick={onBack}><Icon.Back /> Back</button>
-        <div>
-          <h3 style={{ fontSize:'1rem', fontWeight:800, color:'#1e293b' }}>{label} Spaces</h3>
-          <p style={{ fontSize:'0.75rem', color:'#94a3b8' }}>Click a green slot to reserve</p>
+
+        {/* Vehicle type badge */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:'0.5rem',
+          background: color + '18', border: `1.5px solid ${color}40`,
+          borderRadius:'9999px', padding:'0.3rem 0.875rem',
+        }}>
+          <span style={{ fontSize:'1.125rem', lineHeight:1 }}>{emoji}</span>
+          <span style={{ fontSize:'0.875rem', fontWeight:700, color }}>{label}</span>
         </div>
+
+        {!loading && !error && (
+          <span style={{ fontSize:'0.75rem', color:'#94a3b8' }}>
+            {available} of {slots.length} slots available — click green to reserve
+          </span>
+        )}
       </div>
-      {loading ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>Loading parking map…</p>
-      : error ? <p style={{ color:'#ef4444', background:'#fef2f2', padding:'0.75rem 1rem', borderRadius:'10px', fontSize:'0.875rem' }}>{error}</p>
-      : slots.length === 0 ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>No spaces found for this vehicle type.</p>
-      : <ParkingMap slots={slots} selectedId={selected?.id} onSelect={setSelected} />}
+
+      {loading
+        ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>Loading parking map…</p>
+        : error
+          ? <p style={{ color:'#ef4444', background:'#fef2f2', padding:'0.75rem 1rem', borderRadius:'10px', fontSize:'0.875rem' }}>{error}</p>
+          : slots.length === 0
+            ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>No spaces found.</p>
+            : <ParkingMap slots={slots} selectedId={selected?.id} onSelect={setSelected} showTypeLabel={false} />
+      }
+
       {selected && (
         <BookingFormModal slot={selected} vehicleType={vehicleType} onClose={() => setSelected(null)} onBooked={onBooked} />
       )}

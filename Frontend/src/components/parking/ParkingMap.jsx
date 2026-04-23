@@ -46,10 +46,10 @@ function SlotCell({ slot, selected, onSelect }) {
   )
 }
 
-function ZonePanel({ name, slots, selectedId, onSelect }) {
-  const fullyFree     = slots.filter(s => s.available).length
-  const bookable      = slots.filter(s => s.status === 'AVAILABLE').length
-  const type          = slots[0]?.type ?? ''
+function ZonePanel({ name, slots, selectedId, onSelect, showTypeLabel }) {
+  const fullyFree = slots.filter(s => s.available).length
+  const bookable  = slots.filter(s => s.status === 'AVAILABLE').length
+  const type      = slots[0]?.type ?? ''
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -57,7 +57,9 @@ function ZonePanel({ name, slots, selectedId, onSelect }) {
       <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-gray-700">Zone {name}</span>
-          <span className="text-xs text-gray-400">{TYPE_LABEL[type] ?? type}</span>
+          {showTypeLabel && (
+            <span className="text-xs text-gray-400">{TYPE_LABEL[type] ?? type}</span>
+          )}
         </div>
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
           bookable > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
@@ -81,7 +83,7 @@ function ZonePanel({ name, slots, selectedId, onSelect }) {
   )
 }
 
-export default function ParkingMap({ slots, selectedId, onSelect }) {
+export default function ParkingMap({ slots, selectedId, onSelect, showTypeLabel = true }) {
   const zones = slots.reduce((acc, slot) => {
     const z = slot.zone || 'Other'
     if (!acc[z]) acc[z] = []
@@ -136,6 +138,7 @@ export default function ParkingMap({ slots, selectedId, onSelect }) {
             slots={zoneSlots}
             selectedId={selectedId}
             onSelect={onSelect}
+            showTypeLabel={showTypeLabel}
           />
         ))}
       </div>
