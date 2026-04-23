@@ -229,19 +229,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
   const [slotBookings, setSlotBookings] = useState([])
   const [loadingSlot, setLoadingSlot]   = useState(true)
   const [slotError, setSlotError]       = useState(null)
-  const [helmetWanted, setHelmetWanted] = useState(false)
-  const [helmetCount, setHelmetCount]   = useState(1)
-  const [helmetPurpose, setHelmetPurpose]   = useState('')
-  const [hasActiveHelmet, setHasActiveHelmet] = useState(false)
-  const [helmetCheckLoading, setHelmetCheckLoading] = useState(vehicleType === 'MOTORCYCLE')
-
-  useEffect(() => {
-    if (vehicleType !== 'MOTORCYCLE') return
-    helmetBorrowingApi.getAll()
-      .then(res => setHasActiveHelmet((res.data.data || []).some(b => b.status === 'PENDING' || b.status === 'ISSUED')))
-      .catch(() => {})
-      .finally(() => setHelmetCheckLoading(false))
-  }, [vehicleType])
+  const [helmetCount, setHelmetCount]   = useState(0)
 
   const fetchSlotBookings = () => {
     setLoadingSlot(true); setSlotError(null)
@@ -267,8 +255,8 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
     setSubmitting(true); setError(null)
     try {
       await parkingBookingApi.create({ slotId: slot.id, startTime: startDT, endTime: endDT, vehicleNumber: form.vehicleNumber, purpose: form.purpose.trim() || `${vehicleLabel} parking` })
-      if (vehicleType === 'MOTORCYCLE' && helmetWanted && !hasActiveHelmet) {
-        try { await helmetBorrowingApi.create({ purpose: helmetPurpose.trim() || undefined, quantity: helmetCount }) } catch {}
+      if (vehicleType === 'MOTORCYCLE' && helmetCount > 0) {
+        try { await helmetBorrowingApi.create({ quantity: helmetCount }) } catch {}
       }
       onBooked()
     } catch (err) {
@@ -373,37 +361,24 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
             {/* Helmet section */}
             {vehicleType === 'MOTORCYCLE' && (
               <div style={{ background:'#fff7ed', border:'1.5px solid #fed7aa', borderRadius:'12px', padding:'1rem' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.625rem' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.75rem' }}>
                   <span style={{ fontSize:'1.25rem' }}>🪖</span>
                   <span style={{ fontSize:'0.875rem', fontWeight:700, color:'#c2410c' }}>Helmet Borrowing</span>
                 </div>
-                {helmetCheckLoading ? <p style={{ fontSize:'0.8125rem', color:'#c2410c' }}>Checking…</p>
-                : hasActiveHelmet ? <p style={{ fontSize:'0.8125rem', color:'#c2410c', background:'#fff', border:'1px solid #fed7aa', borderRadius:'8px', padding:'0.5rem 0.75rem' }}>You have an active helmet request.</p>
-                : (
-                  <>
-                    <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer', fontSize:'0.875rem', color:'#92400e' }}>
-                      <input type="checkbox" checked={helmetWanted} onChange={e => setHelmetWanted(e.target.checked)} style={{ width:16, height:16, accentColor:'#ea580c' }} />
-                      Also request a campus helmet
-                    </label>
-                    {helmetWanted && (
-                      <div style={{ marginTop:'0.75rem', display:'flex', flexDirection:'column', gap:'0.625rem' }}>
-                        <div style={{ display:'flex', gap:'0.5rem' }}>
-                          {[1,2].map(n => (
-                            <button key={n} type="button" onClick={() => setHelmetCount(n)}
-                              style={{ padding:'0.375rem 1rem', borderRadius:'8px', fontSize:'0.875rem', fontWeight:700, border:'1.5px solid', cursor:'pointer', transition:'all 0.15s',
-                                background: helmetCount===n ? '#ea580c' : '#fff',
-                                color: helmetCount===n ? '#fff' : '#c2410c',
-                                borderColor: helmetCount===n ? '#ea580c' : '#fed7aa' }}>
-                              🪖 {n}
-                            </button>
-                          ))}
-                        </div>
-                        <input type="text" placeholder="Helmet purpose (optional)" value={helmetPurpose} onChange={e => setHelmetPurpose(e.target.value)}
-                          style={{ width:'100%', border:'1.5px solid #fed7aa', borderRadius:'8px', padding:'0.4375rem 0.75rem', fontSize:'0.8125rem', background:'#fff', outline:'none' }} />
-                      </div>
-                    )}
-                  </>
-                )}
+                <div style={{ display:'flex', gap:'0.5rem' }}>
+                  {[{ n: 0, label: 'None' }, { n: 1, label: '🪖 1' }, { n: 2, label: '🪖 2' }].map(({ n, label }) => (
+                    <button key={n} type="button" onClick={() => setHelmetCount(n)}
+                      style={{
+                        padding:'0.4375rem 1.125rem', borderRadius:'8px', fontSize:'0.875rem', fontWeight:700,
+                        border:'1.5px solid', cursor:'pointer', transition:'all 0.15s',
+                        background:  helmetCount === n ? '#ea580c' : '#fff',
+                        color:       helmetCount === n ? '#fff'    : '#c2410c',
+                        borderColor: helmetCount === n ? '#ea580c' : '#fed7aa',
+                      }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -455,11 +430,17 @@ function VehicleSelector({ onSelect }) {
 
 /* ── Slot Picker ─────────────────────────────────────────────────────────── */
 function SlotPicker({ vehicleType, onBack, onBooked }) {
-  const [slots, setSlots]     = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const [slots, setSlots]       = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
   const [selected, setSelected] = useState(null)
-  const label = VEHICLE_TYPES.find(v => v.id === vehicleType)?.label
+
+  const vt    = VEHICLE_TYPES.find(v => v.id === vehicleType)
+  const label = vt?.label ?? vehicleType
+  const emoji = vt?.emoji ?? '🚗'
+  const color = vt?.color ?? '#3b82f6'
+
+  const available = slots.filter(s => s.available).length
 
   useEffect(() => {
     setLoading(true); setError(null)
@@ -471,17 +452,36 @@ function SlotPicker({ vehicleType, onBack, onBooked }) {
 
   return (
     <div className="bk-flow-body">
+      {/* Header row */}
       <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.25rem' }}>
         <button className="bk-back-btn" onClick={onBack}><Icon.Back /> Back</button>
-        <div>
-          <h3 style={{ fontSize:'1rem', fontWeight:800, color:'#1e293b' }}>{label} Spaces</h3>
-          <p style={{ fontSize:'0.75rem', color:'#94a3b8' }}>Click a green slot to reserve</p>
+
+        {/* Vehicle type badge */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:'0.5rem',
+          background: color + '18', border: `1.5px solid ${color}40`,
+          borderRadius:'9999px', padding:'0.3rem 0.875rem',
+        }}>
+          <span style={{ fontSize:'1.125rem', lineHeight:1 }}>{emoji}</span>
+          <span style={{ fontSize:'0.875rem', fontWeight:700, color }}>{label}</span>
         </div>
+
+        {!loading && !error && (
+          <span style={{ fontSize:'0.75rem', color:'#94a3b8' }}>
+            {available} of {slots.length} slots available — click green to reserve
+          </span>
+        )}
       </div>
-      {loading ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>Loading parking map…</p>
-      : error ? <p style={{ color:'#ef4444', background:'#fef2f2', padding:'0.75rem 1rem', borderRadius:'10px', fontSize:'0.875rem' }}>{error}</p>
-      : slots.length === 0 ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>No spaces found for this vehicle type.</p>
-      : <ParkingMap slots={slots} selectedId={selected?.id} onSelect={setSelected} />}
+
+      {loading
+        ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>Loading parking map…</p>
+        : error
+          ? <p style={{ color:'#ef4444', background:'#fef2f2', padding:'0.75rem 1rem', borderRadius:'10px', fontSize:'0.875rem' }}>{error}</p>
+          : slots.length === 0
+            ? <p style={{ color:'#94a3b8', textAlign:'center', padding:'2rem' }}>No spaces found.</p>
+            : <ParkingMap slots={slots} selectedId={selected?.id} onSelect={setSelected} showTypeLabel={false} />
+      }
+
       {selected && (
         <BookingFormModal slot={selected} vehicleType={vehicleType} onClose={() => setSelected(null)} onBooked={onBooked} />
       )}
@@ -717,68 +717,68 @@ export default function MyBookingsPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="bk-list">
-                    <div className="bk-section-label">{displayed.length} booking{displayed.length !== 1 ? 's' : ''}</div>
+                  <>
+                  <div className="bk-section-label">{displayed.length} booking{displayed.length !== 1 ? 's' : ''}</div>
+                  <div className="bk-grid">
                     {displayed.map(b => (
                       <div key={b.id} className={`bk-card bk-card--${b.status}`}>
-                        {/* Slot badge */}
-                        <div className={`bk-slot-badge bk-slot-badge--${b.status}`}>
-                          <span className="bk-slot-badge-num">{b.slotNumber ?? '—'}</span>
-                          {b.zone && <span className="bk-slot-badge-zone">Zone {b.zone}</span>}
+
+                        {/* Header: slot badge + status */}
+                        <div className="bk-card-header">
+                          <div className={`bk-slot-badge bk-slot-badge--${b.status}`}>
+                            <span className="bk-slot-badge-num">{b.slotNumber ?? '—'}</span>
+                            {b.zone && <span className="bk-slot-badge-zone">Zone {b.zone}</span>}
+                          </div>
+                          <span className={`bk-status-badge bk-status-badge--${b.status}`}>{b.status}</span>
                         </div>
 
-                        {/* Info */}
+                        {/* Body: booking details */}
                         <div className="bk-card-body">
-                          <div className="bk-card-row1">
-                            <div className="bk-card-title">
-                              Slot {b.slotNumber}
-                              {b.zone && <span className="bk-zone-chip">Zone {b.zone}</span>}
-                            </div>
-                            <span className={`bk-status-badge bk-status-badge--${b.status}`}>{b.status}</span>
+                          <div className="bk-card-info-row">
+                            <span className="bk-info-label">📅</span>
+                            <span className="bk-info-value">{fmtDate(b.startTime)}</span>
                           </div>
-
-                          <div className="bk-card-meta">
-                            <span className="bk-meta-item">
-                              <svg className="bk-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {fmtDate(b.startTime)}
-                            </span>
-                            <span className="bk-meta-item">
-                              <svg className="bk-meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                          <div className="bk-card-info-row">
+                            <span className="bk-info-label">🕐</span>
+                            <span className="bk-info-value">
                               {fmtTime(b.startTime)} → {fmtTime(b.endTime)}
                               {b.startTime && b.endTime && (
-                                <span style={{ color:'#94a3b8', marginLeft:'0.25rem' }}>({duration(b.startTime, b.endTime)})</span>
+                                <span className="bk-info-dim"> ({duration(b.startTime, b.endTime)})</span>
                               )}
                             </span>
                           </div>
-
                           {b.vehicleNumber && (
-                            <div className="bk-card-vehicle">🚗 {b.vehicleNumber}</div>
+                            <div className="bk-card-info-row">
+                              <span className="bk-info-label">🚗</span>
+                              <span className="bk-info-value bk-info-plate">{b.vehicleNumber}</span>
+                            </div>
                           )}
-
                           {b.purpose && (
-                            <div className="bk-card-purpose">📋 {b.purpose}</div>
+                            <div className="bk-card-info-row">
+                              <span className="bk-info-label">📋</span>
+                              <span className="bk-info-value bk-info-dim">{b.purpose}</span>
+                            </div>
                           )}
-
                           {b.rejectionReason && (
                             <div className="bk-card-reject">⚠ {b.rejectionReason}</div>
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="bk-card-actions">
-                          {(b.status === 'PENDING' || b.status === 'APPROVED') && (
+                        {/* Footer: actions */}
+                        <div className="bk-card-footer">
+                          {(b.status === 'PENDING' || b.status === 'APPROVED') ? (
                             <button className="bk-cancel-btn" onClick={() => handleCancel(b.id)}>
                               Cancel
                             </button>
+                          ) : (
+                            <span className="bk-footer-dim">—</span>
                           )}
                         </div>
+
                       </div>
                     ))}
                   </div>
+                  </>
                 )}
               </div>
             </>
