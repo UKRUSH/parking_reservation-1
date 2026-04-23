@@ -131,7 +131,7 @@ export default function ParkingMap({ slots, selectedId, onSelect, showTypeLabel 
 
       {/* Zones — 2 per row on md+, 1 per row on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(zones).map(([zoneName, zoneSlots]) => (
+        {Object.entries(zones).sort(([a], [b]) => a.localeCompare(b)).map(([zoneName, zoneSlots]) => (
           <ZonePanel
             key={zoneName}
             name={zoneName}
