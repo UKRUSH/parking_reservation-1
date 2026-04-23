@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 
 const STATUS_STYLE = {
-  PENDING:  { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  ISSUED:   { bg: 'bg-blue-100',   text: 'text-blue-700'   },
-  REJECTED: { bg: 'bg-red-100',    text: 'text-red-700'    },
-  RETURNED: { bg: 'bg-gray-100',   text: 'text-gray-600'   },
+  PENDING:   { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  ISSUED:    { bg: 'bg-blue-100',   text: 'text-blue-700'   },
+  REJECTED:  { bg: 'bg-red-100',    text: 'text-red-700'    },
+  RETURNED:  { bg: 'bg-gray-100',   text: 'text-gray-600'   },
+  CANCELLED: { bg: 'bg-gray-100',   text: 'text-gray-500'   },
 }
 
 function fmt(dt) {
@@ -25,6 +26,7 @@ export default function MyBorrowingsPage() {
 
   const [borrowings, setBorrowings] = useState([])
   const [loading, setLoading]       = useState(true)
+  const [cancelling, setCancelling] = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -35,6 +37,19 @@ export default function MyBorrowingsPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  const handleCancel = async (id) => {
+    if (!window.confirm('Cancel this helmet request?')) return
+    setCancelling(id)
+    try {
+      await helmetBorrowingApi.cancel(id)
+      load()
+    } catch {
+      alert('Could not cancel request. Please try again.')
+    } finally {
+      setCancelling(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,8 +110,8 @@ export default function MyBorrowingsPage() {
               const s = STATUS_STYLE[b.status] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
               return (
                 <div key={b.id} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-1 flex-1 min-w-0">
                       <p className="font-semibold text-gray-800">Helmet Request #{b.id}</p>
                       <p className="text-sm text-gray-600">
                         {b.quantity === 2 ? '2 helmets' : '1 helmet'}
@@ -111,9 +126,20 @@ export default function MyBorrowingsPage() {
                         <p className="text-xs text-red-500 mt-1">Reason: {b.rejectionReason}</p>
                       )}
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>
-                      {b.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>
+                        {b.status}
+                      </span>
+                      {b.status === 'PENDING' && (
+                        <button
+                          onClick={() => handleCancel(b.id)}
+                          disabled={cancelling === b.id}
+                          className="text-xs font-semibold text-red-500 border border-red-200 rounded-lg px-3 py-1 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                        >
+                          {cancelling === b.id ? 'Cancelling…' : 'Cancel'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

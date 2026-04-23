@@ -50,6 +50,6 @@ public class HelmetBorrowing {
     }
 
     public enum BorrowStatus {
-        PENDING, ISSUED, REJECTED, RETURNED
+        PENDING, ISSUED, REJECTED, RETURNED, CANCELLED
     }
 }

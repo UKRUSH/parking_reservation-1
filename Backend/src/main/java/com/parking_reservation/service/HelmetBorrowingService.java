@@ -67,6 +67,17 @@ public class HelmetBorrowingService {
     }
 
     @Transactional
+    public HelmetBorrowingResponse cancelBorrowing(Long userId, Long id) {
+        HelmetBorrowing borrowing = findBorrowing(id);
+        if (!borrowing.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("You can only cancel your own requests");
+        }
+        assertStatus(borrowing, BorrowStatus.PENDING, "Only PENDING requests can be cancelled");
+        borrowing.setStatus(BorrowStatus.CANCELLED);
+        return HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
+    }
+
+    @Transactional
     public HelmetBorrowingResponse issueBorrowing(Long id) {
         HelmetBorrowing borrowing = findBorrowing(id);
         assertStatus(borrowing, BorrowStatus.PENDING, "Only PENDING borrowings can be issued");

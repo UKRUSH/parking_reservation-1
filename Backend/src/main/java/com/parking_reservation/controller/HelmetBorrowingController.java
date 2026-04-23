@@ -51,6 +51,15 @@ public class HelmetBorrowingController {
                 .body(ApiResponse.success("Helmet borrowing request submitted", created));
     }
 
+    // PATCH /api/v1/helmet-borrowings/{id}/cancel — owner only, PENDING → CANCELLED
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<HelmetBorrowingResponse>> cancelBorrowing(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Request cancelled",
+                borrowingService.cancelBorrowing(currentUser.getId(), id)));
+    }
+
     // PATCH /api/v1/helmet-borrowings/{id}/issue — ADMIN only
     @PatchMapping("/{id}/issue")
     @PreAuthorize("hasRole('ADMIN')")
