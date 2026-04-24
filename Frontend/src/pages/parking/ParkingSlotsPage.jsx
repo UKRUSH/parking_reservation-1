@@ -4,6 +4,7 @@ import { parkingSlotApi } from '../../api/parkingSlotApi'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 import '../student/StudentDashboardPage.css'
+import '../admin/AdminDashboardPage.css'
 import './ParkingSlotsPage.css'
 
 /* ── Icons ───────────────────────────────────────────────────────────────── */
@@ -68,6 +69,18 @@ const Icon = {
       <rect x="3" y="3" width="18" height="18" rx="3" strokeWidth={2} />
     </svg>
   ),
+  Users: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  ),
+  Bookings: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  ),
   ArrowRight: () => (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -82,22 +95,27 @@ function Sidebar({ open, onClose, user, logout, isAdmin }) {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const navItems = isAdmin
-    ? [
-        { path: '/dashboard',      label: 'Dashboard',         Ico: Icon.Dashboard },
-        { path: '/admin/bookings', label: 'All Bookings',      Ico: Icon.Bookings  },
-        { path: '/parking',        label: 'Parking Map',       Ico: Icon.Map       },
-        { path: '/notifications',  label: 'Notifications',     Ico: Icon.Bell      },
-      ]
-    : [
-        { path: '/student/dashboard', label: 'Dashboard',         Ico: Icon.Dashboard },
-        { path: '/my-bookings',       label: 'My Bookings',       Ico: Icon.Bookings  },
-        { path: '/parking',           label: 'Find Parking',      Ico: Icon.Map       },
-        { path: '/my-borrowings',     label: 'Helmet Borrowings', Ico: Icon.Helmet    },
-        { path: '/tickets',           label: 'Incident Tickets',  Ico: Icon.Shield    },
-        { path: '/notifications',     label: 'Notifications',     Ico: Icon.Bell      },
-      ]
+  const adminNavItems = [
+    { path: '/admin/dashboard',          label: 'Dashboard',         Ico: Icon.Dashboard },
+    { path: '/admin/bookings',           label: 'Parking Requests',  Ico: Icon.Bookings  },
+    { path: '/admin/parking-management', label: 'Slot Management',   Ico: Icon.Parking   },
+    { path: '/parking',                  label: 'Parking Map',       Ico: Icon.Map       },
+    { path: '/admin/helmet-borrowings',  label: 'Helmet Borrowings', Ico: Icon.Helmet    },
+    { path: '/admin/users',              label: 'User Management',   Ico: Icon.Users     },
+    { path: '/tickets',                  label: 'Incident Tickets',  Ico: Icon.Shield    },
+    { path: '/notifications',            label: 'Notifications',     Ico: Icon.Bell      },
+  ]
 
+  const studentNavItems = [
+    { path: '/student/dashboard', label: 'Dashboard',         Ico: Icon.Dashboard },
+    { path: '/my-bookings',       label: 'My Bookings',       Ico: Icon.Bookings  },
+    { path: '/parking',           label: 'Find Parking',      Ico: Icon.Map       },
+    { path: '/my-borrowings',     label: 'Helmet Borrowings', Ico: Icon.Helmet    },
+    { path: '/tickets',           label: 'Incident Tickets',  Ico: Icon.Shield    },
+    { path: '/notifications',     label: 'Notifications',     Ico: Icon.Bell      },
+  ]
+
+  const navItems = isAdmin ? adminNavItems : studentNavItems
   const go = (path) => { navigate(path); onClose() }
 
   return (
@@ -108,17 +126,17 @@ function Sidebar({ open, onClose, user, logout, isAdmin }) {
           <div className="sd-sidebar-logo">SC</div>
           <div>
             <div className="sd-sidebar-brand">Smart Campus</div>
-            <div className="sd-sidebar-brand-sub">Parking Portal</div>
+            <div className="sd-sidebar-brand-sub">{isAdmin ? 'Admin Portal' : 'Parking Portal'}</div>
           </div>
         </div>
         <div className="sd-sidebar-user">
           <div className="sd-sidebar-avatar">{user?.name?.[0]?.toUpperCase() ?? '?'}</div>
           <div style={{ minWidth: 0 }}>
             <div className="sd-sidebar-user-name">{user?.name ?? 'User'}</div>
-            <div className="sd-sidebar-user-role">{isAdmin ? 'Admin' : 'Student'}</div>
+            <div className="sd-sidebar-user-role">{isAdmin ? 'Administrator' : 'Student'}</div>
           </div>
         </div>
-        <div className="sd-nav-label">Menu</div>
+        <div className="sd-nav-label">{isAdmin ? 'Management' : 'Menu'}</div>
         <ul className="sd-nav">
           {navItems.map(({ path, label, Ico }) => (
             <li key={path}>
@@ -133,7 +151,9 @@ function Sidebar({ open, onClose, user, logout, isAdmin }) {
         </ul>
         <div className="sd-sidebar-tip">
           <div className="sd-sidebar-tip-icon"><Icon.Info /></div>
-          <p>Click any <strong>green</strong> slot to select it, then tap <em>Book</em>.</p>
+          {isAdmin
+            ? <p>You have <strong>admin</strong> access to all campus systems.</p>
+            : <p>Click any <strong>green</strong> slot to select it, then tap <em>Book</em>.</p>}
         </div>
         <div className="sd-sidebar-footer">
           <button className="sd-sidebar-logout" onClick={logout}><Icon.Logout /> Sign out</button>
@@ -241,7 +261,7 @@ export default function ParkingSlotsPage() {
   }
 
   return (
-    <div className="sd-shell">
+    <div className={`sd-shell${isAdmin ? ' ad-admin' : ''}`}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)}
         user={user} logout={logout} isAdmin={isAdmin} />
 

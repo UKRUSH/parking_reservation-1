@@ -206,9 +206,8 @@
   line-height: 1.4;
 }
 
-.sd-nav-badge--yellow {
-  background: #f59e0b;
-}
+.sd-nav-badge--yellow { background: #f59e0b; }
+.sd-nav-badge--purple { background: #7c3aed; }
 
 /* ── Sidebar footer ───────────────────────────────────────────────────────── */
 .sd-sidebar-footer {
@@ -557,6 +556,7 @@
 .sd-stat-icon--blue   { background: #eff6ff; color: #2563eb; }
 .sd-stat-icon--amber  { background: #fffbeb; color: #d97706; }
 .sd-stat-icon--green  { background: #f0fdf4; color: #16a34a; }
+.sd-stat-icon--purple { background: #f5f3ff; color: #7c3aed; }
 
 .sd-stat-label {
   font-size: 0.7rem;
