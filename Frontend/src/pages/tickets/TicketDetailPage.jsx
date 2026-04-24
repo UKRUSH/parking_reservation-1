@@ -7,6 +7,8 @@ import NotificationBell from '../../components/common/NotificationBell'
 import AttachmentImage from '../../components/tickets/AttachmentImage'
 import TicketSidebar from '../../components/tickets/TicketSidebar'
 import '../student/StudentDashboardPage.css'
+import '../admin/AdminDashboardPage.css'
+import '../technician/TechnicianDashboardPage.css'
 import './TicketDetailPage.css'
 
 /* ── Icons ───────────────────────────────────────────────────────────────── */
@@ -392,7 +394,7 @@ export default function TicketDetailPage() {
   const heroClass = HERO_CLASS[ticket.status] ?? 'open'
 
   return (
-    <div className="sd-shell">
+    <div className={`sd-shell${isAdmin ? ' ad-admin' : isTech ? ' td-tech' : ''}`}>
       <TicketSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -108,6 +108,24 @@ function fmtTime(dt) {
   return new Date(dt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
+function fmtDuration(start, end) {
+  if (!start || !end) return null
+  const ms = new Date(end) - new Date(start)
+  if (ms <= 0) return null
+  const h = Math.floor(ms / 3600000)
+  const m = Math.floor((ms % 3600000) / 60000)
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
+function userInitials(name) {
+  if (!name) return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 function AdminSidebar({ open, onClose, user, logout }) {
   const navigate = useNavigate()
@@ -180,13 +198,31 @@ function AdminSidebar({ open, onClose, user, logout }) {
 function SkeletonRows() {
   return Array.from({ length: 6 }).map((_, i) => (
     <tr key={i}>
-      <td><span className="ab-skel" style={{ width: '80%', height: 14 }} /></td>
-      <td><span className="ab-skel" style={{ width: '60%', height: 14 }} /></td>
-      <td><span className="ab-skel" style={{ width: '50%', height: 14 }} /></td>
-      <td><span className="ab-skel" style={{ width: '70%', height: 14 }} /></td>
-      <td><span className="ab-skel" style={{ width: '55%', height: 14 }} /></td>
-      <td><span className="ab-skel" style={{ width: 60,    height: 22, borderRadius: 9999 }} /></td>
-      <td><span className="ab-skel" style={{ width: '80%', height: 14 }} /></td>
+      <td><span className="ab-skel" style={{ width: 20,   height: 14 }} /></td>
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="ab-skel" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+          <div>
+            <span className="ab-skel" style={{ width: 90, height: 13, display: 'block' }} />
+            <span className="ab-skel" style={{ width: 120, height: 11, display: 'block', marginTop: 5 }} />
+          </div>
+        </div>
+      </td>
+      <td><span className="ab-skel" style={{ width: 60,   height: 22, borderRadius: 8 }} /></td>
+      <td><span className="ab-skel" style={{ width: 72,   height: 20, borderRadius: 6 }} /></td>
+      <td>
+        <span className="ab-skel" style={{ width: 80, height: 13, display: 'block' }} />
+        <span className="ab-skel" style={{ width: 100, height: 11, display: 'block', marginTop: 5 }} />
+        <span className="ab-skel" style={{ width: 40, height: 16, borderRadius: 9999, display: 'block', marginTop: 5 }} />
+      </td>
+      <td><span className="ab-skel" style={{ width: '70%', height: 13 }} /></td>
+      <td><span className="ab-skel" style={{ width: 70,   height: 22, borderRadius: 9999 }} /></td>
+      <td>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <span className="ab-skel" style={{ width: 68, height: 28, borderRadius: 7 }} />
+          <span className="ab-skel" style={{ width: 52, height: 28, borderRadius: 7 }} />
+        </div>
+      </td>
     </tr>
   ))
 }
@@ -328,16 +364,17 @@ export default function AdminBookingsPage() {
         {/* Stats */}
         <div className="ab-stats-row">
           {[
-            { label: 'Total',     value: stats.total,     icon: '📋' },
-            { label: 'Pending',   value: stats.pending,   icon: '⏳' },
-            { label: 'Approved',  value: stats.approved,  icon: '✅' },
-            { label: 'Rejected',  value: stats.rejected,  icon: '❌' },
-            { label: 'Cancelled', value: stats.cancelled, icon: '🚫' },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="sd-stat-card">
-              <div className="sd-stat-icon">{icon}</div>
-              <div className="sd-stat-value">{loading ? <span className="ab-skel" style={{ width: 40, height: 24, display: 'inline-block' }} /> : value}</div>
-              <div className="sd-stat-label">{label}</div>
+            { label: 'Total',     value: stats.total,     cls: 'ab-stat--total'     },
+            { label: 'Pending',   value: stats.pending,   cls: 'ab-stat--pending'   },
+            { label: 'Approved',  value: stats.approved,  cls: 'ab-stat--approved'  },
+            { label: 'Rejected',  value: stats.rejected,  cls: 'ab-stat--rejected'  },
+            { label: 'Cancelled', value: stats.cancelled, cls: 'ab-stat--cancelled' },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className={`ab-stat-card ${cls}`}>
+              <div className="ab-stat-value">
+                {loading ? <span className="ab-skel" style={{ width: 36, height: 26, display: 'inline-block' }} /> : value}
+              </div>
+              <div className="ab-stat-label">{label}</div>
             </div>
           ))}
         </div>
@@ -388,13 +425,23 @@ export default function AdminBookingsPage() {
 
           {/* Table */}
           <div className="ab-table-wrap">
+            <div className="ab-table-card-header">
+              <div className="ab-table-card-title">
+                <Icon.Bookings />
+                Booking Records
+              </div>
+              <span className="ab-table-card-count">
+                {loading ? '…' : `${displayed.length} ${displayed.length === 1 ? 'entry' : 'entries'}`}
+              </span>
+            </div>
             <table className="ab-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>User</th>
                   <th>Slot / Zone</th>
                   <th>Vehicle</th>
-                  <th>Time</th>
+                  <th>Time &amp; Duration</th>
                   <th>Purpose</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -405,7 +452,7 @@ export default function AdminBookingsPage() {
                   <SkeletonRows />
                 ) : displayed.length === 0 ? (
                   <tr className="ab-empty-row">
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <div className="ab-empty-icon">📭</div>
                       <div className="ab-empty-title">No bookings found</div>
                       <div className="ab-empty-desc">
@@ -414,17 +461,27 @@ export default function AdminBookingsPage() {
                     </td>
                   </tr>
                 ) : (
-                  displayed.map((b) => (
+                  displayed.map((b, idx) => (
                     <tr key={b.id}>
+                      {/* Row number */}
+                      <td className="ab-cell-idx">{idx + 1}</td>
+
                       {/* User */}
                       <td>
-                        <div className="ab-cell-user-name">{b.userName || '—'}</div>
-                        {b.userEmail && <div className="ab-cell-user-email">{b.userEmail}</div>}
+                        <div className="ab-cell-user-wrap">
+                          <div className="ab-cell-avatar">{userInitials(b.userName)}</div>
+                          <div>
+                            <div className="ab-cell-user-name">{b.userName || '—'}</div>
+                            {b.userEmail && <div className="ab-cell-user-email">{b.userEmail}</div>}
+                          </div>
+                        </div>
                       </td>
 
                       {/* Slot */}
                       <td>
-                        <div className="ab-cell-slot">{b.slotNumber || '—'}</div>
+                        <span className="ab-cell-slot-badge">
+                          {b.slotNumber || '—'}
+                        </span>
                         {b.zone && <div className="ab-cell-zone">Zone {b.zone}</div>}
                       </td>
 
@@ -432,7 +489,7 @@ export default function AdminBookingsPage() {
                       <td>
                         {b.vehicleNumber
                           ? <span className="ab-cell-plate">{b.vehicleNumber}</span>
-                          : <span style={{ color: '#94a3b8' }}>—</span>}
+                          : <span className="ab-cell-empty">—</span>}
                       </td>
 
                       {/* Time */}
@@ -441,12 +498,15 @@ export default function AdminBookingsPage() {
                         <div className="ab-cell-time-sep">
                           {fmtTime(b.startTime)} → {fmtTime(b.endTime)}
                         </div>
+                        {fmtDuration(b.startTime, b.endTime) && (
+                          <span className="ab-cell-duration">{fmtDuration(b.startTime, b.endTime)}</span>
+                        )}
                       </td>
 
                       {/* Purpose */}
                       <td>
                         <div className="ab-cell-purpose" title={b.purpose || ''}>
-                          {b.purpose || '—'}
+                          {b.purpose || <span className="ab-cell-empty">—</span>}
                         </div>
                       </td>
 
@@ -464,7 +524,7 @@ export default function AdminBookingsPage() {
                       </td>
 
                       {/* Actions */}
-                      <td>
+                      <td className="ab-cell-actions">
                         <div className="ab-actions">
                           {b.status === 'PENDING' && (
                             <>
@@ -473,13 +533,13 @@ export default function AdminBookingsPage() {
                                 onClick={() => handleApprove(b.id)}
                                 disabled={actionLoading === b.id + '-approve'}
                               >
-                                {actionLoading === b.id + '-approve' ? '…' : 'Approve'}
+                                {actionLoading === b.id + '-approve' ? '…' : '✓ Approve'}
                               </button>
                               <button
                                 className="ab-btn ab-btn--reject"
                                 onClick={() => openReject(b)}
                               >
-                                Reject
+                                ✕ Reject
                               </button>
                             </>
                           )}
@@ -490,6 +550,9 @@ export default function AdminBookingsPage() {
                             >
                               Cancel
                             </button>
+                          )}
+                          {b.status !== 'PENDING' && b.status !== 'APPROVED' && (
+                            <span className="ab-cell-empty ab-no-action">—</span>
                           )}
                         </div>
                       </td>

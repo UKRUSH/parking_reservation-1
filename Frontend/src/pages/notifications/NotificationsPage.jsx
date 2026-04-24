@@ -5,6 +5,8 @@ import { useNotifications } from '../../context/NotificationContext'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 import '../student/StudentDashboardPage.css'
+import '../admin/AdminDashboardPage.css'
+import '../technician/TechnicianDashboardPage.css'
 import './NotificationsPage.css'
 
 /* ── Icons ───────────────────────────────────────────────────────────────── */
@@ -69,6 +71,25 @@ const Icon = {
         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   ),
+  Wrench: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ),
+  Parking: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v-4m0 0V6h5a3 3 0 010 6H8z" />
+      <rect x="3" y="3" width="18" height="18" rx="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+    </svg>
+  ),
+  Users: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  ),
 }
 
 /* ── Notification type config ─────────────────────────────────────────────── */
@@ -82,6 +103,7 @@ const TYPE_CONFIG = {
   HELMET_ISSUED:       { emoji: '🪖', bg: '#fff7ed', label: 'Helmet Issued'       },
   HELMET_REJECTED:     { emoji: '🚫', bg: '#fee2e2', label: 'Helmet Rejected'     },
   HELMET_RETURNED:     { emoji: '✅', bg: '#dcfce7', label: 'Helmet Returned'     },
+  TICKET_ASSIGNED:      { emoji: '🔧', bg: '#ecfdf5', label: 'Ticket Assigned'   },
   TICKET_STATUS_CHANGED:{ emoji: '🎫', bg: '#f5f3ff', label: 'Ticket Updated'    },
   TICKET_COMMENT_ADDED: { emoji: '💬', bg: '#eff6ff', label: 'New Comment'       },
 }
@@ -110,20 +132,39 @@ function formatDate() {
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
-function Sidebar({ open, onClose, user, logout, unreadCount }) {
+function Sidebar({ open, onClose, user, logout, unreadCount, isAdmin, isTech }) {
   const navigate  = useNavigate()
   const location  = useLocation()
 
-  const navItems = [
-    { path: '/student/dashboard', label: 'Dashboard',         Ico: Icon.Dashboard },
-    { path: '/my-bookings',       label: 'My Bookings',       Ico: Icon.Bookings  },
-    { path: '/parking',           label: 'Find Parking',      Ico: Icon.Map       },
-    { path: '/my-borrowings',     label: 'Helmet Borrowings', Ico: Icon.Helmet    },
-    { path: '/tickets',           label: 'Incident Tickets',  Ico: Icon.Shield    },
-    { path: '/notifications',     label: 'Notifications',     Ico: Icon.Bell, badge: unreadCount || null },
-  ]
+  const navItems = isAdmin
+    ? [
+        { path: '/admin/dashboard',          label: 'Dashboard',         Ico: Icon.Dashboard },
+        { path: '/admin/bookings',           label: 'Parking Requests',  Ico: Icon.Bookings  },
+        { path: '/admin/parking-management', label: 'Slot Management',   Ico: Icon.Parking   },
+        { path: '/parking',                  label: 'Parking Map',       Ico: Icon.Map       },
+        { path: '/admin/helmet-borrowings',  label: 'Helmet Borrowings', Ico: Icon.Helmet    },
+        { path: '/admin/users',              label: 'User Management',   Ico: Icon.Users     },
+        { path: '/tickets',                  label: 'Incident Tickets',  Ico: Icon.Shield    },
+        { path: '/notifications',            label: 'Notifications',     Ico: Icon.Bell, badge: unreadCount || null },
+      ]
+    : isTech
+    ? [
+        { path: '/technician/dashboard', label: 'Dashboard',        Ico: Icon.Wrench },
+        { path: '/tickets',              label: 'Assigned Tickets', Ico: Icon.Shield },
+        { path: '/notifications',        label: 'Notifications',    Ico: Icon.Bell, badge: unreadCount || null },
+      ]
+    : [
+        { path: '/student/dashboard', label: 'Dashboard',         Ico: Icon.Dashboard },
+        { path: '/my-bookings',       label: 'My Bookings',       Ico: Icon.Bookings  },
+        { path: '/parking',           label: 'Find Parking',      Ico: Icon.Map       },
+        { path: '/my-borrowings',     label: 'Helmet Borrowings', Ico: Icon.Helmet    },
+        { path: '/tickets',           label: 'Incident Tickets',  Ico: Icon.Shield    },
+        { path: '/notifications',     label: 'Notifications',     Ico: Icon.Bell, badge: unreadCount || null },
+      ]
 
   const go = (path) => { navigate(path); onClose() }
+  const roleLabel = isAdmin ? 'Administrator' : isTech ? 'Technician' : 'Student'
+  const portalLabel = isAdmin ? 'Admin Portal' : isTech ? 'Technician Portal' : 'Parking Portal'
 
   return (
     <>
@@ -133,19 +174,19 @@ function Sidebar({ open, onClose, user, logout, unreadCount }) {
           <div className="sd-sidebar-logo">SC</div>
           <div>
             <div className="sd-sidebar-brand">Smart Campus</div>
-            <div className="sd-sidebar-brand-sub">Parking Portal</div>
+            <div className="sd-sidebar-brand-sub">{portalLabel}</div>
           </div>
         </div>
 
         <div className="sd-sidebar-user">
           <div className="sd-sidebar-avatar">{user?.name?.[0]?.toUpperCase() ?? '?'}</div>
           <div style={{ minWidth: 0 }}>
-            <div className="sd-sidebar-user-name">{user?.name ?? 'Student'}</div>
-            <div className="sd-sidebar-user-role">Student</div>
+            <div className="sd-sidebar-user-name">{user?.name ?? 'User'}</div>
+            <div className="sd-sidebar-user-role">{roleLabel}</div>
           </div>
         </div>
 
-        <div className="sd-nav-label">Menu</div>
+        <div className="sd-nav-label">{isAdmin ? 'Management' : isTech ? 'Navigation' : 'Menu'}</div>
         <ul className="sd-nav">
           {navItems.map(({ path, label, Ico, badge }) => (
             <li key={path}>
@@ -163,7 +204,12 @@ function Sidebar({ open, onClose, user, logout, unreadCount }) {
 
         <div className="sd-sidebar-tip">
           <div className="sd-sidebar-tip-icon"><Icon.Info /></div>
-          <p>Notifications keep you updated on bookings and helmet requests.</p>
+          <p>{isTech
+            ? 'Notifications alert you when tickets are assigned or updated.'
+            : isAdmin
+            ? 'Notifications keep you informed of system activity and requests.'
+            : 'Notifications keep you updated on bookings and helmet requests.'
+          }</p>
         </div>
 
         <div className="sd-sidebar-footer">
@@ -198,9 +244,12 @@ function SkeletonList() {
    Main page
    ══════════════════════════════════════════════════════════════════════════ */
 export default function NotificationsPage() {
-  const { user, logout }             = useAuth()
+  const { user, logout, hasRole }    = useAuth()
   const navigate                     = useNavigate()
   const { fetchUnreadCount }         = useNotifications()
+
+  const isAdmin = hasRole('ADMIN')
+  const isTech  = hasRole('TECHNICIAN')
 
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading]             = useState(true)
@@ -250,14 +299,18 @@ export default function NotificationsPage() {
     return true
   })
 
+  const shellClass = isAdmin ? 'sd-shell ad-admin' : isTech ? 'sd-shell td-tech' : 'sd-shell'
+
   return (
-    <div className="sd-shell">
+    <div className={shellClass}>
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         user={user}
         logout={logout}
         unreadCount={unread}
+        isAdmin={isAdmin}
+        isTech={isTech}
       />
 
       <div className="sd-main">

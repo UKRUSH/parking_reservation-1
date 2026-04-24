@@ -92,13 +92,29 @@ public class IncidentTicketService {
         User technician = userRepository.findById(technicianId)
                 .orElseThrow(() -> new ResourceNotFoundException("Technician not found: " + technicianId));
 
+        User previousTechnician = ticket.getTechnician();
         ticket.setTechnician(technician);
         ticket.setStatus(TicketStatus.IN_PROGRESS);
 
         TicketResponse response = TicketResponse.from(ticketRepository.save(ticket));
+
+        // Notify the ticket reporter
         notificationService.send(ticket.getUser().getId(), NotificationType.TICKET_STATUS_CHANGED,
                 "Ticket Assigned",
                 "Your ticket \"" + ticket.getTitle() + "\" has been assigned to a technician.");
+
+        // Notify the newly assigned technician
+        notificationService.send(technician.getId(), NotificationType.TICKET_ASSIGNED,
+                "New Ticket Assigned",
+                "You have been assigned to ticket \"" + ticket.getTitle() + "\". Please review and take action.");
+
+        // Notify the previous technician if they were replaced
+        if (previousTechnician != null && !previousTechnician.getId().equals(technician.getId())) {
+            notificationService.send(previousTechnician.getId(), NotificationType.TICKET_ASSIGNED,
+                    "Ticket Reassigned",
+                    "Ticket \"" + ticket.getTitle() + "\" has been reassigned to another technician.");
+        }
+
         return response;
     }
 

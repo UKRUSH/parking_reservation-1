@@ -4,10 +4,12 @@ import { NotificationProvider } from './context/NotificationContext'
 import ProtectedRoute from './routes/ProtectedRoute'
 import AdminRoute from './routes/AdminRoute'
 import StudentRoute from './routes/StudentRoute'
+import TechnicianRoute from './routes/TechnicianRoute'
 
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import TechnicianDashboardPage from './pages/technician/TechnicianDashboardPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
 import AdminBookingsPage from './pages/parking/AdminBookingsPage'
 import StudentDashboardPage from './pages/student/StudentDashboardPage'
@@ -29,9 +31,9 @@ function RoleRedirect() {
   const { user, loading, hasRole } = useAuth()
   if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>
   if (!user) return <Navigate to="/login" replace />
-  return hasRole('ADMIN')
-    ? <Navigate to="/admin/dashboard" replace />
-    : <Navigate to="/student/dashboard" replace />
+  if (hasRole('ADMIN'))       return <Navigate to="/admin/dashboard" replace />
+  if (hasRole('TECHNICIAN'))  return <Navigate to="/technician/dashboard" replace />
+  return <Navigate to="/student/dashboard" replace />
 }
 
 export default function App() {
@@ -63,6 +65,11 @@ export default function App() {
             } />
             <Route path="/my-borrowings" element={
               <StudentRoute><MyBorrowingsPage /></StudentRoute>
+            } />
+
+            {/* Technician routes */}
+            <Route path="/technician/dashboard" element={
+              <TechnicianRoute><TechnicianDashboardPage /></TechnicianRoute>
             } />
 
             {/* Admin routes */}

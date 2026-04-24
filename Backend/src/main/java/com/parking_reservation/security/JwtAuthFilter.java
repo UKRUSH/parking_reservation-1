@@ -15,7 +15,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,14 +34,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
             String email = jwtUtil.getEmailFromToken(token);
-            String roles = jwtUtil.getRolesFromToken(token);
-
-            List<SimpleGrantedAuthority> authorities = Arrays.stream(roles.split(","))
-                    .map(String::trim)
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                    .collect(Collectors.toList());
 
             userRepository.findByEmail(email).ifPresent(user -> {
+                // Always read roles from DB so role changes take effect immediately
+                List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
+                        .collect(Collectors.toList());
+
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(user, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);

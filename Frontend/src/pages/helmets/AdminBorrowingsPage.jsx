@@ -81,6 +81,17 @@ const Icon = {
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   ),
+  Search: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  ),
+  Clear: () => (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
@@ -92,9 +103,38 @@ function fmt(dt) {
   })
 }
 
+function fmtDate(dt) {
+  if (!dt) return '—'
+  return new Date(dt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function fmtTime(dt) {
   if (!dt) return '—'
   return new Date(dt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
+function fmtRelTime(dt) {
+  if (!dt) return null
+  const diff = Date.now() - new Date(dt).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins  <  1) return 'Just now'
+  if (mins  < 60) return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days  <  7) return `${days}d ago`
+  return null
+}
+
+function userInitials(name) {
+  if (!name) return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 /* ── Admin Sidebar ───────────────────────────────────────────────────────── */
@@ -169,11 +209,32 @@ function AdminSidebar({ open, onClose, user, logout }) {
 function SkeletonRows() {
   return Array.from({ length: 5 }).map((_, i) => (
     <tr key={i}>
-      {[40, '70%', '60%', 40, '55%', 70, 80].map((w, j) => (
-        <td key={j}>
-          <span className="hb-skel" style={{ width: w, height: 14 }} />
-        </td>
-      ))}
+      <td><span className="hb-skel" style={{ width: 20, height: 14 }} /></td>
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="hb-skel" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
+          <div>
+            <span className="hb-skel" style={{ width: 88, height: 13, display: 'block' }} />
+            <span className="hb-skel" style={{ width: 118, height: 11, display: 'block', marginTop: 5 }} />
+          </div>
+        </div>
+      </td>
+      <td>
+        <span className="hb-skel" style={{ width: 64, height: 22, borderRadius: 8, display: 'block' }} />
+        <span className="hb-skel" style={{ width: 100, height: 11, display: 'block', marginTop: 5 }} />
+      </td>
+      <td><span className="hb-skel" style={{ width: 52, height: 22, borderRadius: 9999 }} /></td>
+      <td>
+        <span className="hb-skel" style={{ width: 80, height: 13, display: 'block' }} />
+        <span className="hb-skel" style={{ width: 48, height: 11, display: 'block', marginTop: 5 }} />
+      </td>
+      <td><span className="hb-skel" style={{ width: 68, height: 22, borderRadius: 9999 }} /></td>
+      <td>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <span className="hb-skel" style={{ width: 56, height: 28, borderRadius: 7 }} />
+          <span className="hb-skel" style={{ width: 52, height: 28, borderRadius: 7 }} />
+        </div>
+      </td>
     </tr>
   ))
 }
@@ -188,6 +249,7 @@ export default function AdminBorrowingsPage() {
   const [borrowings, setBorrowings]   = useState([])
   const [loading, setLoading]         = useState(true)
   const [filter, setFilter]           = useState('ALL')
+  const [search, setSearch]           = useState('')
   const [busy, setBusy]               = useState(false)
   const [toast, setToast]             = useState(null)
 
@@ -216,9 +278,20 @@ export default function AdminBorrowingsPage() {
     return acc
   }, {}), [borrowings])
 
-  const displayed = useMemo(() =>
-    filter === 'ALL' ? borrowings : borrowings.filter(b => b.status === filter),
-  [borrowings, filter])
+  const displayed = useMemo(() => {
+    let list = filter === 'ALL' ? borrowings : borrowings.filter(b => b.status === filter)
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      list = list.filter(b =>
+        b.userName?.toLowerCase().includes(q) ||
+        b.userEmail?.toLowerCase().includes(q) ||
+        b.slotNumber?.toLowerCase().includes(q) ||
+        b.purpose?.toLowerCase().includes(q) ||
+        String(b.bookingId ?? '').includes(q)
+      )
+    }
+    return list
+  }, [borrowings, filter, search])
 
   /* Actions */
   const handleIssue = async (id) => {
@@ -267,12 +340,18 @@ export default function AdminBorrowingsPage() {
 
         {/* Topbar */}
         <header className="sd-topbar">
-          <button className="sd-menu-btn" onClick={() => setSidebarOpen(true)}>
-            <Icon.Menu />
-          </button>
-          <div className="sd-topbar-title">Helmet Borrowings</div>
+          <div className="sd-topbar-left">
+            <button className="sd-hamburger" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
+              <Icon.Menu />
+            </button>
+            <span className="sd-topbar-title">Helmet Borrowings</span>
+          </div>
           <div className="sd-topbar-right">
+            <span className="sd-topbar-date">{formatDate()}</span>
             <NotificationBell />
+            <div className="sd-topbar-avatar" title={user?.name} onClick={() => setSidebarOpen(v => !v)}>
+              {user?.name?.[0]?.toUpperCase() ?? 'A'}
+            </div>
           </div>
         </header>
 
@@ -294,18 +373,17 @@ export default function AdminBorrowingsPage() {
         {/* Stats */}
         <div className="hb-stats-row">
           {[
-            { label: 'Total',     value: borrowings.length,    icon: '📋' },
-            { label: 'Pending',   value: counts.PENDING   ?? 0, icon: '⏳' },
-            { label: 'Issued',    value: counts.ISSUED    ?? 0, icon: '🔵' },
-            { label: 'Returned',  value: counts.RETURNED  ?? 0, icon: '✅' },
-            { label: 'Rejected',  value: counts.REJECTED  ?? 0, icon: '❌' },
-          ].map(({ label, value, icon }) => (
-            <div key={label} className="sd-stat-card">
-              <div className="sd-stat-icon">{icon}</div>
-              <div className="sd-stat-value">
-                {loading ? <span className="hb-skel" style={{ width: 40, height: 24, display: 'inline-block' }} /> : value}
+            { label: 'Total',    value: borrowings.length,    cls: 'hb-stat--total'    },
+            { label: 'Pending',  value: counts.PENDING  ?? 0, cls: 'hb-stat--pending'  },
+            { label: 'Issued',   value: counts.ISSUED   ?? 0, cls: 'hb-stat--issued'   },
+            { label: 'Returned', value: counts.RETURNED ?? 0, cls: 'hb-stat--returned' },
+            { label: 'Rejected', value: counts.REJECTED ?? 0, cls: 'hb-stat--rejected' },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className={`hb-stat-card ${cls}`}>
+              <div className="hb-stat-value">
+                {loading ? <span className="hb-skel" style={{ width: 36, height: 26, display: 'inline-block' }} /> : value}
               </div>
-              <div className="sd-stat-label">{label}</div>
+              <div className="hb-stat-label">{label}</div>
             </div>
           ))}
         </div>
@@ -315,6 +393,20 @@ export default function AdminBorrowingsPage() {
 
           {/* Toolbar */}
           <div className="hb-toolbar">
+            <div className="hb-search-wrap">
+              <span className="hb-search-icon"><Icon.Search /></span>
+              <input
+                className="hb-search"
+                placeholder="Search by name, slot, purpose…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              {search && (
+                <button className="hb-search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+                  <Icon.Clear />
+                </button>
+              )}
+            </div>
             <div className="hb-filter-tabs">
               {FILTERS.map(f => (
                 <button
@@ -328,20 +420,35 @@ export default function AdminBorrowingsPage() {
                 </button>
               ))}
             </div>
-            <button className="hb-refresh-btn" onClick={load}>
+            <button className="hb-refresh-btn" onClick={load} disabled={loading}>
               <Icon.Refresh /> Refresh
             </button>
           </div>
 
           {/* Result count */}
           {!loading && (
-            <span className="hb-count">
-              Showing {displayed.length} of {borrowings.length} requests
-            </span>
+            <div className="hb-count-bar">
+              <span className="hb-count">
+                {displayed.length} of {borrowings.length} {borrowings.length === 1 ? 'request' : 'requests'}
+                {search && <span className="hb-count-query"> matching &ldquo;{search}&rdquo;</span>}
+              </span>
+              {search && displayed.length === 0 && (
+                <button className="hb-count-clear" onClick={() => setSearch('')}>Clear search</button>
+              )}
+            </div>
           )}
 
           {/* Table */}
           <div className="hb-table-wrap">
+            <div className="hb-table-card-header">
+              <div className="hb-table-card-title">
+                <Icon.Helmet />
+                Borrowing Records
+              </div>
+              <span className="hb-table-card-count">
+                {loading ? '…' : `${displayed.length} ${displayed.length === 1 ? 'entry' : 'entries'}`}
+              </span>
+            </div>
             <table className="hb-table">
               <thead>
                 <tr>
@@ -366,35 +473,42 @@ export default function AdminBorrowingsPage() {
                     </td>
                   </tr>
                 ) : (
-                  displayed.map((b) => (
-                    <tr key={b.id}>
+                  displayed.map((b, idx) => (
+                    <tr key={b.id} data-status={b.status}>
 
-                      {/* ID */}
-                      <td><span className="hb-cell-id">{b.id}</span></td>
+                      {/* Row index */}
+                      <td className="hb-cell-idx">{idx + 1}</td>
 
                       {/* Student */}
                       <td>
-                        <div className="hb-cell-name">{b.userName}</div>
-                        {b.userEmail && <div className="hb-cell-email">{b.userEmail}</div>}
+                        <div className="hb-cell-user-wrap">
+                          <div className="hb-cell-avatar">{userInitials(b.userName)}</div>
+                          <div>
+                            <div className="hb-cell-name">{b.userName}</div>
+                            {b.userEmail && <div className="hb-cell-email">{b.userEmail}</div>}
+                          </div>
+                        </div>
                       </td>
 
                       {/* Booking / Purpose */}
                       <td>
                         {b.slotNumber ? (
                           <>
-                            <div className="hb-cell-slot-num">
-                              Slot {b.slotNumber}
-                              {b.zone && <span style={{ fontWeight: 400, color: '#94a3b8', marginLeft: 4 }}>(Zone {b.zone})</span>}
+                            <div className="hb-cell-slot-wrap">
+                              <span className="hb-cell-slot-badge">
+                                {b.slotNumber}
+                              </span>
+                              {b.zone && <span className="hb-cell-zone">Zone {b.zone}</span>}
                             </div>
                             {b.bookingStart && (
-                              <div className="hb-cell-slot-zone">
-                                {fmt(b.bookingStart)} → {fmtTime(b.bookingEnd)}
+                              <div className="hb-cell-slot-time">
+                                {fmtDate(b.bookingStart)} · {fmtTime(b.bookingStart)} → {fmtTime(b.bookingEnd)}
                               </div>
                             )}
-                            <div className="hb-cell-slot-link">via Motorcycle Booking #{b.bookingId}</div>
+                            <div className="hb-cell-slot-link">Booking #{b.bookingId}</div>
                           </>
                         ) : (
-                          <span style={{ color: b.purpose ? '#475569' : '#cbd5e1', fontStyle: b.purpose ? 'normal' : 'italic' }}>
+                          <span className={b.purpose ? 'hb-cell-purpose' : 'hb-cell-empty'}>
                             {b.purpose || '—'}
                           </span>
                         )}
@@ -405,14 +519,18 @@ export default function AdminBorrowingsPage() {
 
                       {/* Helmets */}
                       <td>
-                        <span className="hb-cell-helmets">
-                          {b.quantity === 2 ? '🪖🪖 ×2' : '🪖 ×1'}
+                        <span className={`hb-cell-helmet-badge ${b.quantity === 2 ? 'hb-cell-helmet-badge--two' : ''}`}>
+                          🪖 ×{b.quantity ?? 1}
                         </span>
                       </td>
 
                       {/* Requested at */}
                       <td>
-                        <div className="hb-cell-time">{fmt(b.createdAt)}</div>
+                        <div className="hb-cell-time">{fmtDate(b.createdAt)}</div>
+                        <div className="hb-cell-time-sub">{fmtTime(b.createdAt)}</div>
+                        {fmtRelTime(b.createdAt) && (
+                          <span className="hb-cell-reltime">{fmtRelTime(b.createdAt)}</span>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -421,12 +539,12 @@ export default function AdminBorrowingsPage() {
                           <span className="hb-status-dot" />
                           {b.status.charAt(0) + b.status.slice(1).toLowerCase()}
                         </span>
-                        {b.issuedAt   && <div className="hb-status-time">Issued {fmt(b.issuedAt)}</div>}
-                        {b.returnedAt && <div className="hb-status-time">Returned {fmt(b.returnedAt)}</div>}
+                        {b.issuedAt   && <div className="hb-status-time">Issued {fmtDate(b.issuedAt)}</div>}
+                        {b.returnedAt && <div className="hb-status-time">Returned {fmtDate(b.returnedAt)}</div>}
                       </td>
 
                       {/* Actions */}
-                      <td>
+                      <td className="hb-cell-actions">
                         <div className="hb-actions">
                           {b.status === 'PENDING' && (
                             <>
@@ -435,14 +553,14 @@ export default function AdminBorrowingsPage() {
                                 onClick={() => handleIssue(b.id)}
                                 disabled={busy}
                               >
-                                Issue
+                                ✓ Issue
                               </button>
                               <button
                                 className="hb-btn hb-btn--reject"
                                 onClick={() => openReject(b)}
                                 disabled={busy}
                               >
-                                Reject
+                                ✕ Reject
                               </button>
                             </>
                           )}
@@ -452,11 +570,11 @@ export default function AdminBorrowingsPage() {
                               onClick={() => handleReturn(b.id)}
                               disabled={busy}
                             >
-                              Mark Returned
+                              ↩ Returned
                             </button>
                           )}
                           {['REJECTED', 'RETURNED', 'CANCELLED'].includes(b.status) && (
-                            <span className="hb-no-action">No actions</span>
+                            <span className="hb-no-action">—</span>
                           )}
                         </div>
                       </td>

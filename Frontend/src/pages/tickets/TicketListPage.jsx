@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ticketApi } from '../../api/ticketApi'
+import { userApi } from '../../api/userApi'
 import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 import TicketCard from '../../components/tickets/TicketCard'
 import TicketSidebar from '../../components/tickets/TicketSidebar'
 import '../student/StudentDashboardPage.css'
+import '../admin/AdminDashboardPage.css'
+import '../technician/TechnicianDashboardPage.css'
 import './TicketListPage.css'
 
 /* ── Icons ───────────────────────────────────────────────────────────────── */
@@ -81,6 +84,12 @@ export default function TicketListPage() {
   const [rejectId, setRejectId]       = useState(null)
   const [reason, setReason]           = useState('')
 
+  // assign modal
+  const [technicians, setTechnicians]   = useState([])
+  const [assignTicket, setAssignTicket] = useState(null)
+  const [assignId, setAssignId]         = useState('')
+  const [assignBusy, setAssignBusy]     = useState(false)
+
   const notify = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   const load = () => {
@@ -92,6 +101,31 @@ export default function TicketListPage() {
   }
 
   useEffect(() => { load() }, [filter])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    userApi.getAll()
+      .then(res => {
+        const all = res.data.data || []
+        setTechnicians(all.filter(u => [...(u.roles ?? [])].includes('TECHNICIAN')))
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleAssign = async (e) => {
+    e.preventDefault()
+    if (!assignId) return
+    setAssignBusy(true)
+    try {
+      await ticketApi.assign(assignTicket.id, Number(assignId))
+      notify(`Technician assigned to ticket #${assignTicket.id}.`)
+      setAssignTicket(null)
+      setAssignId('')
+      load()
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to assign technician.')
+    } finally { setAssignBusy(false) }
+  }
 
   const handleReject = async (e) => {
     e.preventDefault()
@@ -149,7 +183,7 @@ export default function TicketListPage() {
   ]
 
   return (
-    <div className="sd-shell">
+    <div className={`sd-shell${isAdmin ? ' ad-admin' : isTech ? ' td-tech' : ''}`}>
       <TicketSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -347,9 +381,28 @@ export default function TicketListPage() {
                           </span>
                         </td>
                         <td>
-                          {t.technicianName
-                            ? <span className="tl-td-tech">🔧 {t.technicianName}</span>
-                            : <span className="tl-td-tech-none">Unassigned</span>}
+                          {t.technicianName ? (
+                            <div className="tl-td-tech-row">
+                              <span className="tl-td-tech">🔧 {t.technicianName}</span>
+                              {(t.status === 'OPEN' || t.status === 'IN_PROGRESS') && (
+                                <button
+                                  className="tl-btn-change"
+                                  onClick={() => { setAssignTicket(t); setAssignId('') }}
+                                >
+                                  Change
+                                </button>
+                              )}
+                            </div>
+                          ) : (t.status === 'OPEN' || t.status === 'IN_PROGRESS') ? (
+                            <button
+                              className="tl-btn-assign"
+                              onClick={() => { setAssignTicket(t); setAssignId('') }}
+                            >
+                              + Assign
+                            </button>
+                          ) : (
+                            <span className="tl-td-tech-none">— Unassigned</span>
+                          )}
                         </td>
                         <td><span className="tl-td-date">{fmt(t.createdAt)}</span></td>
                         <td>
@@ -468,6 +521,75 @@ export default function TicketListPage() {
                 >
                   {busy ? 'Rejecting…' : 'Confirm Reject'}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Assign Technician modal ── */}
+      {assignTicket && (
+        <div className="tl-modal-overlay">
+          <div className="tl-modal">
+            <div className="tl-modal-header">
+              <div>
+                <div className="tl-modal-title">
+                  {assignTicket.technicianName ? 'Change Technician' : 'Assign Technician'}
+                </div>
+                <div className="tl-modal-sub">Ticket #{assignTicket.id} — {assignTicket.title}</div>
+              </div>
+              <button className="tl-modal-close" onClick={() => { setAssignTicket(null); setAssignId('') }}>✕</button>
+            </div>
+            <form onSubmit={handleAssign}>
+              <div className="tl-modal-body">
+                {technicians.length === 0 ? (
+                  <div className="tl-modal-empty">
+                    <div className="tl-modal-empty-icon">🔧</div>
+                    <div className="tl-modal-empty-text">No technicians found.</div>
+                    <div className="tl-modal-empty-sub">Assign the TECHNICIAN role to a user first from User Management.</div>
+                  </div>
+                ) : (
+                  <>
+                    {assignTicket.technicianName && (
+                      <div className="tl-modal-current">
+                        <span className="tl-modal-current-label">Currently assigned</span>
+                        <span className="tl-modal-current-name">🔧 {assignTicket.technicianName}</span>
+                      </div>
+                    )}
+                    <label className="tl-modal-label">
+                      {assignTicket.technicianName ? 'Select new technician' : 'Select a technician'}
+                    </label>
+                    <select
+                      className="tl-modal-select"
+                      value={assignId}
+                      onChange={e => setAssignId(e.target.value)}
+                      required
+                    >
+                      <option value="">— Choose technician —</option>
+                      {technicians.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
+              <div className="tl-modal-footer">
+                <button
+                  type="button"
+                  className="tl-modal-btn tl-modal-btn--cancel"
+                  onClick={() => { setAssignTicket(null); setAssignId('') }}
+                >
+                  Cancel
+                </button>
+                {technicians.length > 0 && (
+                  <button
+                    type="submit"
+                    className="tl-modal-btn tl-modal-btn--confirm"
+                    disabled={assignBusy || !assignId}
+                  >
+                    {assignBusy ? 'Saving…' : assignTicket.technicianName ? 'Change' : 'Assign'}
+                  </button>
+                )}
               </div>
             </form>
           </div>
