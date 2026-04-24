@@ -155,7 +155,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
     setSubmitting(true)
     setError(null)
     try {
-      await parkingBookingApi.create({
+      const bookingRes = await parkingBookingApi.create({
         slotId: slot.id,
         startTime: startDT,
         endTime: endDT,
@@ -164,7 +164,12 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
       })
       if (vehicleType === 'MOTORCYCLE' && helmetWanted && !hasActiveHelmet) {
         try {
-          await helmetBorrowingApi.create({ purpose: helmetPurpose.trim() || undefined, quantity: helmetCount })
+          const newBookingId = bookingRes.data?.data?.id ?? null
+          await helmetBorrowingApi.create({
+            purpose: helmetPurpose.trim() || undefined,
+            quantity: helmetCount,
+            bookingId: newBookingId,
+          })
         } catch {
           // helmet request failed silently — parking booking already confirmed
         }

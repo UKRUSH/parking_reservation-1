@@ -20,6 +20,10 @@ public class HelmetBorrowing {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "booking_id", nullable = true)
+    private ParkingBooking booking;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BorrowStatus status = BorrowStatus.PENDING;
