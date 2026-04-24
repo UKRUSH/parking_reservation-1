@@ -5,12 +5,10 @@ import com.parking_reservation.dto.response.HelmetBorrowingResponse;
 import com.parking_reservation.entity.HelmetBorrowing;
 import com.parking_reservation.entity.HelmetBorrowing.BorrowStatus;
 import com.parking_reservation.entity.NotificationType;
-import com.parking_reservation.entity.ParkingBooking;
 import com.parking_reservation.entity.User;
 import com.parking_reservation.exception.BookingConflictException;
 import com.parking_reservation.exception.ResourceNotFoundException;
 import com.parking_reservation.repository.HelmetBorrowingRepository;
-import com.parking_reservation.repository.ParkingBookingRepository;
 import com.parking_reservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,7 +24,6 @@ public class HelmetBorrowingService {
 
     private final HelmetBorrowingRepository borrowingRepository;
     private final UserRepository userRepository;
-    private final ParkingBookingRepository bookingRepository;
     private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
@@ -65,11 +62,6 @@ public class HelmetBorrowingService {
         borrowing.setUser(user);
         borrowing.setPurpose(request.getPurpose());
         borrowing.setQuantity(qty);
-
-        if (request.getBookingId() != null) {
-            ParkingBooking booking = bookingRepository.findById(request.getBookingId()).orElse(null);
-            borrowing.setBooking(booking);
-        }
 
         return HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
     }

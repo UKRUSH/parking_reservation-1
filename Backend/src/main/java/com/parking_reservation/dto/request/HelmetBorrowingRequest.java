@@ -6,5 +6,4 @@ import lombok.Data;
 public class HelmetBorrowingRequest {
     private String purpose;
     private int quantity = 1;
-    private Long bookingId;
 }
