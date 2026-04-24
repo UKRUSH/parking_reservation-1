@@ -8,4 +8,5 @@ export const helmetBorrowingApi = {
   issue:   (id)         => axiosInstance.patch(`/helmet-borrowings/${id}/issue`),
   reject:  (id, reason) => axiosInstance.patch(`/helmet-borrowings/${id}/reject`, { reason }),
   return:  (id)         => axiosInstance.patch(`/helmet-borrowings/${id}/return`),
+  cancel:  (id)         => axiosInstance.patch(`/helmet-borrowings/${id}/cancel`),
 }

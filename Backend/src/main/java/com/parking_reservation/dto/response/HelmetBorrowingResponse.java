@@ -20,6 +20,13 @@ public class HelmetBorrowingResponse {
     private LocalDateTime returnedAt;
     private LocalDateTime createdAt;
 
+    // Linked booking info (null for standalone requests)
+    private Long bookingId;
+    private String slotNumber;
+    private String zone;
+    private LocalDateTime bookingStart;
+    private LocalDateTime bookingEnd;
+
     public static HelmetBorrowingResponse from(HelmetBorrowing h) {
         HelmetBorrowingResponse r = new HelmetBorrowingResponse();
         r.setId(h.getId());
@@ -33,6 +40,13 @@ public class HelmetBorrowingResponse {
         r.setIssuedAt(h.getIssuedAt());
         r.setReturnedAt(h.getReturnedAt());
         r.setCreatedAt(h.getCreatedAt());
+        if (h.getBooking() != null) {
+            r.setBookingId(h.getBooking().getId());
+            r.setSlotNumber(h.getBooking().getSlot().getSlotNumber());
+            r.setZone(h.getBooking().getSlot().getZone());
+            r.setBookingStart(h.getBooking().getStartTime());
+            r.setBookingEnd(h.getBooking().getEndTime());
+        }
         return r;
     }
 }
