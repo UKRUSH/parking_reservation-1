@@ -5,10 +5,11 @@ import com.parking_reservation.dto.response.HelmetBorrowingResponse;
 import com.parking_reservation.entity.HelmetBorrowing;
 import com.parking_reservation.entity.HelmetBorrowing.BorrowStatus;
 import com.parking_reservation.entity.NotificationType;
+import com.parking_reservation.entity.ParkingBooking;
 import com.parking_reservation.entity.User;
-import com.parking_reservation.exception.BookingConflictException;
 import com.parking_reservation.exception.ResourceNotFoundException;
 import com.parking_reservation.repository.HelmetBorrowingRepository;
+import com.parking_reservation.repository.ParkingBookingRepository;
 import com.parking_reservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class HelmetBorrowingService {
 
     private final HelmetBorrowingRepository borrowingRepository;
     private final UserRepository userRepository;
+    private final ParkingBookingRepository bookingRepository;
     private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
@@ -45,14 +47,6 @@ public class HelmetBorrowingService {
 
     @Transactional
     public HelmetBorrowingResponse requestBorrowing(Long userId, HelmetBorrowingRequest request) {
-        boolean hasActive = borrowingRepository.existsByUserIdAndStatusIn(
-                userId, List.of(BorrowStatus.PENDING, BorrowStatus.ISSUED));
-        if (hasActive) {
-            throw new BookingConflictException(
-                    "You already have an active helmet borrowing request. " +
-                    "Please wait until it is resolved before submitting a new one.");
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
@@ -62,6 +56,11 @@ public class HelmetBorrowingService {
         borrowing.setUser(user);
         borrowing.setPurpose(request.getPurpose());
         borrowing.setQuantity(qty);
+
+        if (request.getBookingId() != null) {
+            ParkingBooking booking = bookingRepository.findById(request.getBookingId()).orElse(null);
+            borrowing.setBooking(booking);
+        }
 
         return HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
     }
@@ -85,12 +84,10 @@ public class HelmetBorrowingService {
         borrowing.setIssuedAt(LocalDateTime.now());
         HelmetBorrowingResponse response = HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
         String helmetWord = borrowing.getQuantity() == 2 ? "2 helmets have" : "Your helmet has";
-        notificationService.send(
-                borrowing.getUser().getId(),
-                NotificationType.HELMET_ISSUED,
-                "Helmet Issued",
-                helmetWord + " been approved. Please collect from the admin office."
-        );
+        try {
+            notificationService.send(borrowing.getUser().getId(), NotificationType.HELMET_ISSUED,
+                    "Helmet Issued", helmetWord + " been approved. Please collect from the admin office.");
+        } catch (Exception ignored) {}
         return response;
     }
 
@@ -101,28 +98,27 @@ public class HelmetBorrowingService {
         borrowing.setStatus(BorrowStatus.REJECTED);
         borrowing.setRejectionReason(reason);
         HelmetBorrowingResponse response = HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
-        notificationService.send(
-                borrowing.getUser().getId(),
-                NotificationType.HELMET_REJECTED,
-                "Helmet Request Rejected",
-                "Your helmet borrowing request was rejected. Reason: " + reason
-        );
+        try {
+            notificationService.send(borrowing.getUser().getId(), NotificationType.HELMET_REJECTED,
+                    "Helmet Request Rejected", "Your helmet borrowing request was rejected. Reason: " + reason);
+        } catch (Exception ignored) {}
         return response;
     }
 
     @Transactional
-    public HelmetBorrowingResponse returnBorrowing(Long id) {
+    public HelmetBorrowingResponse returnBorrowing(Long userId, boolean isAdmin, Long id) {
         HelmetBorrowing borrowing = findBorrowing(id);
+        if (!isAdmin && !borrowing.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("You can only return your own helmets");
+        }
         assertStatus(borrowing, BorrowStatus.ISSUED, "Only ISSUED helmets can be marked as returned");
         borrowing.setStatus(BorrowStatus.RETURNED);
         borrowing.setReturnedAt(LocalDateTime.now());
         HelmetBorrowingResponse response = HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
-        notificationService.send(
-                borrowing.getUser().getId(),
-                NotificationType.HELMET_RETURNED,
-                "Helmet Returned",
-                "Your helmet has been successfully returned. Thank you!"
-        );
+        try {
+            notificationService.send(borrowing.getUser().getId(), NotificationType.HELMET_RETURNED,
+                    "Helmet Returned", "Your helmet has been successfully returned. Thank you!");
+        } catch (Exception ignored) {}
         return response;
     }
 

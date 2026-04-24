@@ -53,19 +53,16 @@ public class ParkingBookingService {
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
-
         boolean conflict = bookingRepository.countConflictingBookings(
                 request.getSlotId(), BookingStatus.APPROVED,
                 request.getStartTime(), request.getEndTime()) > 0;
         if (conflict) {
             throw new BookingConflictException("Slot is already booked for the requested time range");
         }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
         ParkingSlot slot = slotRepository.findById(request.getSlotId())
                 .orElseThrow(() -> new ResourceNotFoundException("Parking slot not found: " + request.getSlotId()));
-
         ParkingBooking booking = new ParkingBooking();
         booking.setUser(user);
         booking.setSlot(slot);
@@ -73,7 +70,6 @@ public class ParkingBookingService {
         booking.setEndTime(request.getEndTime());
         booking.setVehicleNumber(request.getVehicleNumber());
         booking.setPurpose(request.getPurpose());
-
         return ParkingBookingResponse.from(bookingRepository.save(booking));
     }
 
@@ -83,13 +79,11 @@ public class ParkingBookingService {
         assertStatus(booking, BookingStatus.PENDING, "Only PENDING bookings can be approved");
         booking.setStatus(BookingStatus.APPROVED);
         ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
-        notificationService.send(
-                booking.getUser().getId(),
-                NotificationType.BOOKING_APPROVED,
-                "Booking Confirmed",
-                "Your booking for slot " + booking.getSlot().getSlotNumber() +
-                " (Zone " + booking.getSlot().getZone() + ") has been approved."
-        );
+        try {
+            notificationService.send(booking.getUser().getId(), NotificationType.BOOKING_APPROVED,
+                    "Booking Confirmed", "Your booking for slot " + booking.getSlot().getSlotNumber()
+                            + " (Zone " + booking.getSlot().getZone() + ") has been approved.");
+        } catch (Exception ignored) {}
         return response;
     }
 
@@ -100,31 +94,28 @@ public class ParkingBookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectionReason(reason);
         ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
-        notificationService.send(
-                booking.getUser().getId(),
-                NotificationType.BOOKING_REJECTED,
-                "Booking Rejected",
-                "Your booking for slot " + booking.getSlot().getSlotNumber() +
-                " (Zone " + booking.getSlot().getZone() + ") was rejected. Reason: " + reason
-        );
+        try {
+            notificationService.send(booking.getUser().getId(), NotificationType.BOOKING_REJECTED,
+                    "Booking Rejected", "Your booking for slot " + booking.getSlot().getSlotNumber()
+                            + " (Zone " + booking.getSlot().getZone() + ") was rejected. Reason: " + reason);
+        } catch (Exception ignored) {}
         return response;
     }
 
     @Transactional
     public ParkingBookingResponse cancelBooking(Long bookingId) {
         ParkingBooking booking = findBooking(bookingId);
-        if (booking.getStatus() == BookingStatus.REJECTED || booking.getStatus() == BookingStatus.CANCELLED) {
+        if (booking.getStatus() == BookingStatus.REJECTED
+                || booking.getStatus() == BookingStatus.CANCELLED) {
             throw new IllegalArgumentException("Booking cannot be cancelled in its current state");
         }
         booking.setStatus(BookingStatus.CANCELLED);
         ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
-        notificationService.send(
-                booking.getUser().getId(),
-                NotificationType.BOOKING_CANCELLED,
-                "Booking Cancelled",
-                "Your booking for slot " + booking.getSlot().getSlotNumber() +
-                " (Zone " + booking.getSlot().getZone() + ") has been cancelled."
-        );
+        try {
+            notificationService.send(booking.getUser().getId(), NotificationType.BOOKING_CANCELLED,
+                    "Booking Cancelled", "Your booking for slot " + booking.getSlot().getSlotNumber()
+                            + " (Zone " + booking.getSlot().getZone() + ") has been cancelled.");
+        } catch (Exception ignored) {}
         return response;
     }
 
@@ -140,7 +131,8 @@ public class ParkingBookingService {
 
     @Transactional(readOnly = true)
     public boolean checkConflict(Long slotId, LocalDateTime startTime, LocalDateTime endTime) {
-        return bookingRepository.countConflictingBookings(slotId, BookingStatus.APPROVED, startTime, endTime) > 0;
+        return bookingRepository.countConflictingBookings(
+                slotId, BookingStatus.APPROVED, startTime, endTime) > 0;
     }
 
     private ParkingBooking findBooking(Long id) {

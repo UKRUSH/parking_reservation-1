@@ -78,11 +78,14 @@ public class HelmetBorrowingController {
         return ResponseEntity.ok(ApiResponse.success("Request rejected", borrowingService.rejectBorrowing(id, reason)));
     }
 
-    // PATCH /api/v1/helmet-borrowings/{id}/return — ADMIN only
+    // PATCH /api/v1/helmet-borrowings/{id}/return — owner or ADMIN
     @PatchMapping("/{id}/return")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<HelmetBorrowingResponse>> returnBorrowing(
+            @AuthenticationPrincipal User currentUser,
             @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Helmet returned", borrowingService.returnBorrowing(id)));
+        boolean isAdmin = currentUser.getRoles().stream()
+                .anyMatch(r -> r.getName().name().equals("ADMIN"));
+        return ResponseEntity.ok(ApiResponse.success("Helmet returned",
+                borrowingService.returnBorrowing(currentUser.getId(), isAdmin, id)));
     }
 }

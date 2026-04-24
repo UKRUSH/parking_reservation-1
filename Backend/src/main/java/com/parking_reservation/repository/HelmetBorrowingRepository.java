@@ -1,11 +1,11 @@
 package com.parking_reservation.repository;
 
 import com.parking_reservation.entity.HelmetBorrowing;
-import com.parking_reservation.entity.HelmetBorrowing.BorrowStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface HelmetBorrowingRepository extends JpaRepository<HelmetBorrowing, Long> {
@@ -14,6 +14,5 @@ public interface HelmetBorrowingRepository extends JpaRepository<HelmetBorrowing
 
     List<HelmetBorrowing> findAllByOrderByCreatedAtDesc();
 
-    // Prevents a student from submitting a new request while one is still PENDING or ISSUED
-    boolean existsByUserIdAndStatusIn(Long userId, List<BorrowStatus> statuses);
+    Optional<HelmetBorrowing> findByBookingId(Long bookingId);
 }

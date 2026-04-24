@@ -22,6 +22,7 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(null)
+  const [actionError, setActionError] = useState(null)
 
   const loadBookings = () => {
     setLoading(true)
@@ -36,9 +37,12 @@ export default function AdminBookingsPage() {
 
   const handleApprove = async (id) => {
     setActionLoading(id + '-approve')
+    setActionError(null)
     try {
       await parkingBookingApi.approve(id)
       loadBookings()
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Failed to approve booking.')
     } finally {
       setActionLoading(null)
     }
@@ -48,9 +52,12 @@ export default function AdminBookingsPage() {
     const reason = window.prompt('Enter rejection reason:')
     if (reason === null) return
     setActionLoading(id + '-reject')
+    setActionError(null)
     try {
       await parkingBookingApi.reject(id, reason || 'No reason provided')
       loadBookings()
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Failed to reject booking.')
     } finally {
       setActionLoading(null)
     }
@@ -59,9 +66,12 @@ export default function AdminBookingsPage() {
   const handleCancel = async (id) => {
     if (!window.confirm('Cancel this booking?')) return
     setActionLoading(id + '-cancel')
+    setActionError(null)
     try {
       await parkingBookingApi.cancel(id)
       loadBookings()
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Failed to cancel booking.')
     } finally {
       setActionLoading(null)
     }
@@ -83,6 +93,13 @@ export default function AdminBookingsPage() {
 
       <div className="max-w-6xl mx-auto p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">All Parking Bookings</h2>
+
+        {actionError && (
+          <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+            <span>⚠ {actionError}</span>
+            <button onClick={() => setActionError(null)} className="ml-4 font-bold text-red-500 hover:text-red-700">✕</button>
+          </div>
+        )}
 
         {loading ? (
           <p className="text-gray-500">Loading bookings...</p>
@@ -152,13 +169,13 @@ export default function AdminBookingsPage() {
                               </button>
                             </>
                           )}
-                          {b.status === 'APPROVED' && (
+                          {(b.status === 'APPROVED' || b.status === 'PENDING') && (
                             <button
                               onClick={() => handleCancel(b.id)}
                               disabled={actionLoading === b.id + '-cancel'}
                               className="text-xs text-gray-500 hover:underline disabled:opacity-50"
                             >
-                              Cancel
+                              {actionLoading === b.id + '-cancel' ? 'Cancelling…' : 'Cancel'}
                             </button>
                           )}
                         </div>

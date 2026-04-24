@@ -5,10 +5,11 @@ import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 
 const STATUS_STYLE = {
-  PENDING:  'bg-yellow-100 text-yellow-700',
-  ISSUED:   'bg-blue-100 text-blue-700',
-  REJECTED: 'bg-red-100 text-red-700',
-  RETURNED: 'bg-gray-100 text-gray-600',
+  PENDING:   'bg-yellow-100 text-yellow-700',
+  ISSUED:    'bg-blue-100 text-blue-700',
+  REJECTED:  'bg-red-100 text-red-700',
+  RETURNED:  'bg-gray-100 text-gray-600',
+  CANCELLED: 'bg-gray-100 text-gray-500',
 }
 
 function fmt(dt) {
@@ -83,7 +84,7 @@ export default function AdminBorrowingsPage() {
     } finally { setBusy(false) }
   }
 
-  const FILTERS = ['ALL', 'PENDING', 'ISSUED', 'REJECTED', 'RETURNED']
+  const FILTERS = ['ALL', 'PENDING', 'ISSUED', 'REJECTED', 'RETURNED', 'CANCELLED']
   const displayed = filter === 'ALL' ? borrowings : borrowings.filter(b => b.status === filter)
 
   const counts = borrowings.reduce((acc, b) => {
@@ -203,7 +204,8 @@ export default function AdminBorrowingsPage() {
                 <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
                   <th className="text-left px-5 py-3">#</th>
                   <th className="text-left px-5 py-3">Student</th>
-                  <th className="text-left px-5 py-3">Purpose</th>
+                  <th className="text-left px-5 py-3">Booking / Purpose</th>
+                  <th className="text-left px-5 py-3">Helmets</th>
                   <th className="text-left px-5 py-3">Requested</th>
                   <th className="text-left px-5 py-3">Status</th>
                   <th className="text-left px-5 py-3">Actions</th>
@@ -217,14 +219,29 @@ export default function AdminBorrowingsPage() {
                       <p className="font-medium text-gray-800">{b.userName}</p>
                       <p className="text-xs text-gray-400">{b.userEmail}</p>
                     </td>
-                    <td className="px-5 py-3 text-gray-500 max-w-[160px]">
-                      <p className="text-xs font-semibold text-gray-700 mb-0.5">
-                        {b.quantity === 2 ? '🪖🪖 2 helmets' : '🪖 1 helmet'}
-                      </p>
-                      <span className="truncate block">{b.purpose || <span className="text-gray-300 italic">—</span>}</span>
+                    <td className="px-5 py-3 text-gray-600 max-w-[200px]">
+                      {b.slotNumber ? (
+                        <>
+                          <p className="text-sm font-bold text-gray-800">
+                            Slot {b.slotNumber}
+                            {b.zone && <span className="font-normal text-gray-400 ml-1">(Zone {b.zone})</span>}
+                          </p>
+                          {b.bookingStart && (
+                            <p className="text-xs text-gray-500 whitespace-nowrap">
+                              {fmt(b.bookingStart)} → {new Date(b.bookingEnd).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          )}
+                          <p className="text-xs text-blue-500 mt-0.5">via Motorcycle Booking #{b.bookingId}</p>
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-sm">{b.purpose || <span className="text-gray-300 italic">—</span>}</span>
+                      )}
                       {b.rejectionReason && (
                         <p className="text-xs text-red-400 mt-0.5">↳ {b.rejectionReason}</p>
                       )}
+                    </td>
+                    <td className="px-5 py-3 text-gray-700 font-semibold whitespace-nowrap">
+                      {b.quantity === 2 ? '🪖🪖 2' : '🪖 1'}
                     </td>
                     <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{fmt(b.createdAt)}</td>
                     <td className="px-5 py-3">

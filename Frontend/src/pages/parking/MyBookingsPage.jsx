@@ -254,9 +254,9 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
     if (new Date(startDT) < new Date()) { setError('Start time cannot be in the past'); return }
     setSubmitting(true); setError(null)
     try {
-      await parkingBookingApi.create({ slotId: slot.id, startTime: startDT, endTime: endDT, vehicleNumber: form.vehicleNumber, purpose: form.purpose.trim() || `${vehicleLabel} parking` })
+      const bookingRes = await parkingBookingApi.create({ slotId: slot.id, startTime: startDT, endTime: endDT, vehicleNumber: form.vehicleNumber, purpose: form.purpose.trim() || `${vehicleLabel} parking` })
       if (vehicleType === 'MOTORCYCLE' && helmetCount > 0) {
-        try { await helmetBorrowingApi.create({ quantity: helmetCount }) } catch {}
+        try { await helmetBorrowingApi.create({ quantity: helmetCount, bookingId: bookingRes.data?.data?.id ?? null }) } catch {}
       }
       onBooked()
     } catch (err) {
@@ -292,16 +292,20 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
             <p style={{ fontSize:'0.6875rem', fontWeight:700, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:'0.5rem' }}>Existing Bookings</p>
             {loadingSlot ? <p style={{ fontSize:'0.8125rem', color:'#94a3b8' }}>Loading…</p>
             : slotError ? <p style={{ fontSize:'0.8125rem', color:'#ef4444' }}>{slotError}</p>
-            : slotBookings.length === 0 ? <p style={{ fontSize:'0.8125rem', color:'#22c55e', fontWeight:600 }}>No bookings — fully available.</p>
-            : (
-              <div style={{ display:'flex', flexDirection:'column', gap:'0.25rem', maxHeight:'100px', overflowY:'auto' }}>
-                {slotBookings.map(b => (
-                  <div key={b.id} style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', padding:'0.3rem 0.625rem', fontSize:'0.75rem', fontFamily:'monospace', color:'#dc2626', fontWeight:600 }}>
-                    {fmtDateTime(b.startTime)} — {fmtTime(b.endTime)}
-                  </div>
-                ))}
-              </div>
-            )}
+            : (() => {
+                const future = slotBookings.filter(b => new Date(b.endTime) > new Date())
+                return future.length === 0
+                  ? <p style={{ fontSize:'0.8125rem', color:'#22c55e', fontWeight:600 }}>No bookings — fully available.</p>
+                  : (
+                    <div style={{ display:'flex', flexDirection:'column', gap:'0.25rem', maxHeight:'100px', overflowY:'auto' }}>
+                      {future.map(b => (
+                        <div key={b.id} style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', padding:'0.3rem 0.625rem', fontSize:'0.75rem', fontFamily:'monospace', color:'#dc2626', fontWeight:600 }}>
+                          {fmtDateTime(b.startTime)} — {fmtTime(b.endTime)}
+                        </div>
+                      ))}
+                    </div>
+                  )
+              })()}
           </div>
 
           <form onSubmit={handleSubmit} style={{ padding:'1rem 1.5rem 1.5rem', display:'flex', flexDirection:'column', gap:'0.875rem' }}>
@@ -503,6 +507,7 @@ export default function MyBookingsPage() {
   const [vehicleType, setVehicleType]   = useState(null)
   const [filter, setFilter]             = useState('ALL')
   const [search, setSearch]             = useState('')
+  const [viewBooking, setViewBooking]   = useState(null)
 
   const loadBookings = () => {
     setLoading(true)
@@ -513,12 +518,6 @@ export default function MyBookingsPage() {
   }
 
   useEffect(() => { loadBookings() }, [])
-
-  const handleCancel = async (id) => {
-    if (!window.confirm('Cancel this booking?')) return
-    await parkingBookingApi.cancel(id)
-    loadBookings()
-  }
 
   const handleBooked = () => { setStep('list'); setVehicleType(null); loadBookings() }
 
@@ -764,15 +763,11 @@ export default function MyBookingsPage() {
                           )}
                         </div>
 
-                        {/* Footer: actions */}
+                        {/* Footer */}
                         <div className="bk-card-footer">
-                          {(b.status === 'PENDING' || b.status === 'APPROVED') ? (
-                            <button className="bk-cancel-btn" onClick={() => handleCancel(b.id)}>
-                              Cancel
-                            </button>
-                          ) : (
-                            <span className="bk-footer-dim">—</span>
-                          )}
+                          <button className="bk-view-btn" onClick={() => setViewBooking(b)}>
+                            View Details
+                          </button>
                         </div>
 
                       </div>
@@ -785,6 +780,72 @@ export default function MyBookingsPage() {
           )}
         </div>
       </div>
+
+      {/* ── View Details Modal ── */}
+      {viewBooking && (
+        <div
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:'1rem', backdropFilter:'blur(4px)' }}
+          onClick={() => setViewBooking(null)}
+        >
+          <div
+            style={{ background:'#fff', borderRadius:'20px', boxShadow:'0 24px 64px rgba(0,0,0,0.22)', width:'100%', maxWidth:'460px', maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.125rem 1.5rem', borderBottom:'1px solid #f1f5f9' }}>
+              <div>
+                <div style={{ fontSize:'1rem', fontWeight:800, color:'#1e293b' }}>Booking Details</div>
+                <div style={{ fontSize:'0.75rem', color:'#94a3b8', marginTop:'0.1rem' }}>ID #{viewBooking.id}</div>
+              </div>
+              <button onClick={() => setViewBooking(null)} style={{ width:32, height:32, borderRadius:'50%', background:'#f1f5f9', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', color:'#64748b', fontWeight:700 }}>✕</button>
+            </div>
+
+            {/* Body */}
+            <div style={{ overflowY:'auto', flex:1, padding:'1.25rem 1.5rem', display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+
+              {/* Slot + Status hero */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'12px', padding:'0.875rem 1rem' }}>
+                <div>
+                  <div style={{ fontSize:'1.375rem', fontWeight:800, color:'#1e293b', lineHeight:1 }}>{viewBooking.slotNumber ?? '—'}</div>
+                  {viewBooking.zone && <div style={{ fontSize:'0.8125rem', color:'#64748b', fontWeight:500, marginTop:'0.2rem' }}>Zone {viewBooking.zone}</div>}
+                </div>
+                <span className={`bk-status-badge bk-status-badge--${viewBooking.status}`}>{viewBooking.status}</span>
+              </div>
+
+              {/* Detail rows */}
+              {[
+                { icon:'📅', label:'Date',          val: fmtDate(viewBooking.startTime) },
+                { icon:'🕐', label:'Time',          val: `${fmtTime(viewBooking.startTime)} → ${fmtTime(viewBooking.endTime)}${viewBooking.startTime && viewBooking.endTime ? ' (' + duration(viewBooking.startTime, viewBooking.endTime) + ')' : ''}` },
+                { icon:'🚗', label:'Vehicle Plate', val: viewBooking.vehicleNumber || null },
+                { icon:'📋', label:'Purpose',       val: viewBooking.purpose || null },
+                { icon:'🕒', label:'Booked On',     val: fmtDateTime(viewBooking.createdAt) },
+              ].filter(r => r.val).map(({ icon, label, val }) => (
+                <div key={label} style={{ display:'flex', gap:'0.875rem', alignItems:'flex-start', paddingBottom:'0.625rem', borderBottom:'1px solid #f1f5f9' }}>
+                  <span style={{ fontSize:'1rem', lineHeight:1.6, width:'20px', textAlign:'center', flexShrink:0 }}>{icon}</span>
+                  <div>
+                    <div style={{ fontSize:'0.6875rem', fontWeight:600, color:'#94a3b8', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:'0.15rem' }}>{label}</div>
+                    <div style={{ fontSize:'0.9rem', fontWeight:600, color:'#1e293b' }}>{val}</div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Rejection reason */}
+              {viewBooking.rejectionReason && (
+                <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'10px', padding:'0.75rem 1rem', fontSize:'0.8125rem', color:'#dc2626' }}>
+                  ⚠ Rejection Reason: {viewBooking.rejectionReason}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding:'1rem 1.5rem', borderTop:'1px solid #f1f5f9' }}>
+              <button onClick={() => setViewBooking(null)} style={{ width:'100%', background:'#f1f5f9', border:'none', color:'#475569', fontWeight:600, fontSize:'0.875rem', padding:'0.625rem', borderRadius:'10px', cursor:'pointer' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

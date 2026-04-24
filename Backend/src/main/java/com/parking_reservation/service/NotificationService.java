@@ -9,6 +9,7 @@ import com.parking_reservation.repository.NotificationRepository;
 import com.parking_reservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class NotificationService {
      * Send a notification to a user.
      * Called by other module services (Booking, Helmet, Ticket).
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void send(Long userId, NotificationType type, String title, String message) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));

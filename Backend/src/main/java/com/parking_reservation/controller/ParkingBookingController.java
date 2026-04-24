@@ -72,8 +72,9 @@ public class ParkingBookingController {
         return ResponseEntity.ok(ApiResponse.success("Booking rejected", bookingService.rejectBooking(id, reason)));
     }
 
-    // PATCH /api/v1/parking-bookings/{id}/cancel
+    // PATCH /api/v1/parking-bookings/{id}/cancel — ADMIN only
     @PatchMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ParkingBookingResponse>> cancelBooking(
             @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Booking cancelled", bookingService.cancelBooking(id)));
