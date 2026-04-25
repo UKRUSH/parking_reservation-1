@@ -8,6 +8,7 @@ import com.parking_reservation.dto.response.TicketResponse;
 import com.parking_reservation.entity.*;
 import com.parking_reservation.entity.IncidentTicket.TicketPriority;
 import com.parking_reservation.entity.IncidentTicket.TicketStatus;
+import com.parking_reservation.entity.RoleType;
 import com.parking_reservation.exception.ResourceNotFoundException;
 import com.parking_reservation.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +79,16 @@ public class IncidentTicketService {
             }
         }
 
-        return TicketResponse.from(ticketRepository.save(ticket));
+        TicketResponse response = TicketResponse.from(ticketRepository.save(ticket));
+
+        // Notify all admins that a new ticket was submitted
+        userRepository.findByRolesName(RoleType.ADMIN).forEach(admin ->
+            notificationService.send(admin.getId(), NotificationType.TICKET_CREATED,
+                "New Incident Ticket",
+                user.getName() + " submitted a new ticket: \"" + ticket.getTitle() + "\".")
+        );
+
+        return response;
     }
 
     @Transactional

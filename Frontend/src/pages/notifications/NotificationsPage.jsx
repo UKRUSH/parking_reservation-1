@@ -103,6 +103,7 @@ const TYPE_CONFIG = {
   HELMET_ISSUED:       { emoji: '🪖', bg: '#fff7ed', label: 'Helmet Issued'       },
   HELMET_REJECTED:     { emoji: '🚫', bg: '#fee2e2', label: 'Helmet Rejected'     },
   HELMET_RETURNED:     { emoji: '✅', bg: '#dcfce7', label: 'Helmet Returned'     },
+  TICKET_CREATED:       { emoji: '🎟️', bg: '#faf5ff', label: 'New Ticket'        },
   TICKET_ASSIGNED:      { emoji: '🔧', bg: '#ecfdf5', label: 'Ticket Assigned'   },
   TICKET_STATUS_CHANGED:{ emoji: '🎫', bg: '#f5f3ff', label: 'Ticket Updated'    },
   TICKET_COMMENT_ADDED: { emoji: '💬', bg: '#eff6ff', label: 'New Comment'       },

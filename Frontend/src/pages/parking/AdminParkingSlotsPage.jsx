@@ -498,7 +498,7 @@ export default function AdminParkingSlotsPage() {
                 <label>Zone Letter</label>
                 <input className="aps-input"
                   value={zoneForm.zone}
-                  onChange={e => handleZoneFormChange('zone', e.target.value.toUpperCase())}
+                  onChange={e => handleZoneFormChange('zone', e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase())}
                   placeholder="e.g. K" maxLength={3} />
               </div>
               <div className="aps-field">
@@ -524,9 +524,9 @@ export default function AdminParkingSlotsPage() {
               </div>
               <div className="aps-field">
                 <label>Number of Slots</label>
-                <input className="aps-input" type="number" min={1} max={100}
+                <input className="aps-input" type="number" min={1} max={24}
                   value={zoneForm.count}
-                  onChange={e => setZoneForm(p => ({ ...p, count: e.target.value }))} />
+                  onChange={e => setZoneForm(p => ({ ...p, count: Math.min(24, Math.max(1, Number(e.target.value))) }))} />
               </div>
             </div>
 

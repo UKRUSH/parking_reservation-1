@@ -2,12 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import { useNotifications } from '../../context/NotificationContext'
 
 const TYPE_ICON = {
-  BOOKING_APPROVED:    { emoji: '✅', color: 'text-green-600'  },
-  BOOKING_REJECTED:    { emoji: '❌', color: 'text-red-500'    },
-  BOOKING_CANCELLED:   { emoji: '🚫', color: 'text-gray-500'   },
-  BOOKING_ENDING_SOON: { emoji: '⏰', color: 'text-orange-500' },
-  BOOKING_ENDED:       { emoji: '🏁', color: 'text-blue-500'   },
-  BOOKING_REMINDER:    { emoji: '🔔', color: 'text-yellow-500' },
+  BOOKING_APPROVED:     { emoji: '✅', color: 'text-green-600'  },
+  BOOKING_REJECTED:     { emoji: '❌', color: 'text-red-500'    },
+  BOOKING_CANCELLED:    { emoji: '🚫', color: 'text-gray-500'   },
+  BOOKING_ENDING_SOON:  { emoji: '⏰', color: 'text-orange-500' },
+  BOOKING_ENDED:        { emoji: '🏁', color: 'text-blue-500'   },
+  BOOKING_REMINDER:     { emoji: '🔔', color: 'text-yellow-500' },
+  TICKET_CREATED:       { emoji: '🎟️', color: 'text-purple-500' },
+  TICKET_ASSIGNED:      { emoji: '🔧', color: 'text-teal-500'   },
+  TICKET_STATUS_CHANGED:{ emoji: '🎫', color: 'text-indigo-500' },
+  TICKET_COMMENT_ADDED: { emoji: '💬', color: 'text-blue-500'   },
 }
 
 function timeAgo(dateStr) {
